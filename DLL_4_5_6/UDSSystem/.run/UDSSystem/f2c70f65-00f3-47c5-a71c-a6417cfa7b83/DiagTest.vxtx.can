@@ -1,0 +1,1128 @@
+﻿/* !Encoding: 65001  */
+includes
+{
+  #include "__DiagLibrary.cin"
+  #include "__cDiagService.cin"
+  #include "__VariablesLib.cin"
+  #include "__CaplGeneratorLib.cin"
+  #include "__CANoeReportFuntionsLib.cin"
+}
+
+variables
+{
+  // Global variables defined within this CAPL file
+}
+
+void Tt0_StoreTwoDTCs()
+{
+  TestCommandBegin(__eSet, __cSet, "", __cEmpty);
+  {
+  
+    __ReportTableHead3Columns(__cSetCaption , __cTSym, __cTOp, __cAssigned); 
+    {
+      @sysvarFloat::`ExternalSignals::`SupplyVoltage = 9;
+      __ReportTableRow(0, "System variable 'ExternalSignals::SupplyVoltage'", __cAOp, 9, "");
+    }
+    __ReportTableEndTestStep("1");
+  }
+  TestCommandEnd();
+
+  TestCommandBegin(__eWait, __cWait, "", __cEmpty);
+  {
+    __Wait("1", (1.1 * 1000000000), 1000000000, "");
+  }
+  TestCommandEnd();
+
+  TestCommandBegin(__eSet, __cSet, "", __cEmpty);
+  {
+  
+    __ReportTableHead3Columns(__cSetCaption , __cTSym, __cTOp, __cAssigned); 
+    {
+      @sysvarFloat::`ExternalSignals::`SupplyVoltage = 15;
+      __ReportTableRow(0, "System variable 'ExternalSignals::SupplyVoltage'", __cAOp, 15, "");
+    }
+    __ReportTableEndTestStep("1");
+  }
+  TestCommandEnd();
+
+  TestCommandBegin(__eWait, __cWait, "", __cEmpty);
+  {
+    __Wait("1", (1.1 * 1000000000), 1000000000, "");
+  }
+  TestCommandEnd();
+
+  TestCommandBegin(__eSet, __cSet, "", __cEmpty);
+  {
+  
+    __ReportTableHead3Columns(__cSetCaption , __cTSym, __cTOp, __cAssigned); 
+    {
+      @sysvarFloat::`ExternalSignals::`SupplyVoltage = 12.4;
+      __ReportTableRow(0, "System variable 'ExternalSignals::SupplyVoltage'", __cAOp, 12.4, "");
+    }
+    __ReportTableEndTestStep("1");
+  }
+  TestCommandEnd();
+
+  TestCommandBegin(__eWait, __cWait, "", __cEmpty);
+  {
+    __Wait("1", (1.1 * 1000000000), 1000000000, "");
+  }
+  TestCommandEnd();
+
+}
+
+void Tt0_Tet_TtInit()
+{
+
+}
+
+void Tt0_Tet_Tc0()
+{
+  CreateTTEIFFunction("Tt0_Tc0", __eTcDef, __eLocal);  
+  CallInterfaceFunction("01 Serial Number Read Door FL + FR", __cEmpty , __cEmpty );
+}
+testcase Tt0_Tc0()
+{	
+  SetBreakOnFail(1);
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "0");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "SerialNumber_Read" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+    }
+    while(0);
+  
+  
+    // Response, check & read aspect
+    {
+      __res = 1;
+      __ReportTableHead5Columns(__cCheckCaption, __cTSym, __cTOp, __cRefVal, __cActual, __cRes);
+      {
+        double __nDiagValue;
+        __DiagGetParameter(__resp, "SerialNumber", __nDiagValue);
+        __csr = (CheckSignalMatch(__nDiagValue, 1397051953, "==") == 1);
+        __ReportTableRow(0, "Diagnostic parameter \'SerialNumber\'", "==", 1397051953, "");
+        __ReportCell(__nDiagValue);
+        __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      __ReportTableEndVerdict(__cEvaluateResponse, __res);
+  	__bVerdict = __bVerdict && __res;
+    }
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "1");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "SerialNumber_Read" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFR"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+    }
+    while(0);
+  
+  
+    // Response, check & read aspect
+    {
+      __res = 1;
+      __ReportTableHead5Columns(__cCheckCaption, __cTSym, __cTOp, __cRefVal, __cActual, __cRes);
+      {
+        double __nDiagValue;
+        __DiagGetParameter(__resp, "SerialNumber", __nDiagValue);
+        __csr = (CheckSignalMatch(__nDiagValue, 1397051954, "==") == 1);
+        __ReportTableRow(0, "Diagnostic parameter \'SerialNumber\'", "==", 1397051954, "");
+        __ReportCell(__nDiagValue);
+        __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      __ReportTableEndVerdict(__cEvaluateResponse, __res);
+  	__bVerdict = __bVerdict && __res;
+    }
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+}
+
+void Tt0_Tet_Tc1()
+{
+  CreateTTEIFFunction("Tt0_Tc1", __eTcDef, __eLocal);  
+  CallInterfaceFunction("01.1 Serial Number Read (functional) Door FL + FR", __cEmpty , __cEmpty );
+}
+testcase Tt0_Tc1()
+{	
+  SetBreakOnFail(1);
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "0");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "SerialNumber_Read" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("FunctionalGroup"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+    }
+    while(0);
+  
+  
+    // Response, check & read aspect
+    {
+      __res = 1;
+      __ReportTableHead5Columns(__cCheckCaption, __cTSym, __cTOp, __cRefVal, __cActual, __cRes);
+      {
+        double __nDiagValue;
+        __DiagGetParameter(__resp, "SerialNumber", __nDiagValue);
+        {
+          int __res1,__res2;
+          __csr = (CheckSignalMatch(__nDiagValue, 1397051953, ">=") == 1);
+          __res1 = __csr;
+          __csr = (CheckSignalMatch(__nDiagValue, 1397051954, "<=") == 1);
+          __res2 = __csr;
+          __csr = __res1 && __res2;
+        
+          snprintf(__cArray, elCount(__cArray), "1397051953..1397051954");
+          __ReportTableRow(0, "Diagnostic parameter \'SerialNumber\'", __cRange, __cArray, __cEmpty);
+          __ReportCell(__nDiagValue);
+          __ReportCellResult(__csr, __ePassFail);
+        }
+        __res = __res && __csr;
+      
+      }
+      __ReportTableEndVerdict(__cEvaluateResponse, __res);
+  	__bVerdict = __bVerdict && __res;
+    }
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+}
+
+void Tt0_Tet_Tc2()
+{
+  CreateTTEIFFunction("Tt0_Tc2", __eTcDef, __eLocal);  
+  CallInterfaceFunction("02 Check Door Contacts", __cEmpty , __cEmpty );
+}
+testcase Tt0_Tc2()
+{	
+  SetBreakOnFail(1);
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "1");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "Door_Status_Control" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+        {
+          snprintf(__cArray, 2048, "%s", "open");
+          __res = __DiagSetParameter(__req, "Door_Contact.Door_contact_front_right", __cArray);
+          if(__res < 0)
+          {
+            __bVerdict = __eVerdictFail;
+            __DiagErrCodeTestStep(__res, "Cannot set diagnostic parameter 'Door_Contact.Door_contact_front_right'");
+            break;
+          }
+        }
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "IOCBI_STA_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'IOCBI_STA_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'IOCBI_STA_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    // Response, check & read aspect
+    {
+      __res = 1;
+      __ReportTableHead5Columns(__cCheckCaption, __cTSym, __cTOp, __cRefVal, __cActual, __cRes);
+      {
+        __DiagGetParameter(__resp, "Door_Contact.Door_contact_front_right", __bDiagValueArray, __cDiagValueArray);
+      __csr = strncmp(__cDiagValueArray, "open", 2048) == 0;
+      __ReportTableRow(0, "Diagnostic parameter \'Door_Contact.Door_contact_front_right\'", "==", "open", "");__ReportCell(__cDiagValueArray);
+      __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      __ReportTableEndVerdict(__cEvaluateResponse, __res);
+  	__bVerdict = __bVerdict && __res;
+    }
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "2");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "Door_Status_Read" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "RDBI_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'RDBI_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'RDBI_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    // Response, check & read aspect
+    {
+      __res = 1;
+      __ReportTableHead5Columns(__cCheckCaption, __cTSym, __cTOp, __cRefVal, __cActual, __cRes);
+      {
+        __DiagGetParameter(__resp, "Door_Contact.Door_contact_front_left", __bDiagValueArray, __cDiagValueArray);
+      __csr = strncmp(__cDiagValueArray, "closed", 2048) == 0;
+      __ReportTableRow(0, "Diagnostic parameter \'Door_Contact.Door_contact_front_left\'", "==", "closed", "");__ReportCell(__cDiagValueArray);
+      __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      {
+        __DiagGetParameter(__resp, "Door_Contact.Door_contact_front_right", __bDiagValueArray, __cDiagValueArray);
+      __csr = strncmp(__cDiagValueArray, "open", 2048) == 0;
+      __ReportTableRow(0, "Diagnostic parameter \'Door_Contact.Door_contact_front_right\'", "==", "open", "");__ReportCell(__cDiagValueArray);
+      __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      {
+        __DiagGetParameter(__resp, "Door_Contact.Door_contact_rear_left", __bDiagValueArray, __cDiagValueArray);
+      __csr = strncmp(__cDiagValueArray, "closed", 2048) == 0;
+      __ReportTableRow(0, "Diagnostic parameter \'Door_Contact.Door_contact_rear_left\'", "==", "closed", "");__ReportCell(__cDiagValueArray);
+      __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      {
+        __DiagGetParameter(__resp, "Door_Contact.Door_contact_rear_right", __bDiagValueArray, __cDiagValueArray);
+      __csr = strncmp(__cDiagValueArray, "closed", 2048) == 0;
+      __ReportTableRow(0, "Diagnostic parameter \'Door_Contact.Door_contact_rear_right\'", "==", "closed", "");__ReportCell(__cDiagValueArray);
+      __ReportCellResult(__csr, __ePassFail);
+        __res = __res && __csr;
+      
+      }
+      __ReportTableEndVerdict(__cEvaluateResponse, __res);
+  	__bVerdict = __bVerdict && __res;
+    }
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "3");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "Door_Status_ReturnControl" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "IOCBI_RCTECU_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'IOCBI_RCTECU_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'IOCBI_RCTECU_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+}
+
+void Tt0_Tet_Tc3()
+{
+  CreateTTEIFFunction("Tt0_Tc3", __eTcDef, __eLocal);  
+  CallInterfaceFunction("03 Unlock and write variant coding", __cEmpty , __cEmpty );
+}
+testcase Tt0_Tc3()
+{	
+  SetBreakOnFail(1);
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "0");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "ExtendedDiagnosticSession_Start" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "STDS_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'STDS_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'STDS_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+  TestCommandBegin(__eDiagUnlockEcu, __cDiagUnlockEcu, "", "1");
+  {
+    long result;
+  
+    __DiagSetTarget("DoorFL");
+    DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+  
+    TestStep("", "Unlocking Diagnostic ECU 'DoorFL'");
+    result = TestWaitForUnlockEcu(1);
+    if(result == 0)
+      TestStepPass( "Unlocking succeeded.");
+    else
+      __DiagErrCodeTestStep(result, "Unlocking Diagnostic ECU 'DoorFL'");
+  }
+  TestCommandEnd();
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "2");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "Variant_Coding_Read" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "RDBI_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'RDBI_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'RDBI_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    // Response, check & read aspect
+    {
+      __res = 1;
+      __ReportTableHead5Columns(__cCheckCaption, __cTSym, __cTOp, __cRefVal, __cActual, __cRes);
+      {
+        __DiagGetParameter(__resp, "Codingstring.VehicleType", __bDiagValueArray, __cDiagValueArray);
+        {
+        
+          __bSetInCheckAlignment = 1;	
+          sysSetVariableString(sysvarString::`TestUnit::`CurrentVehicleType, __cDiagValueArray);
+          __ReportTableRow(0, "System variable 'CurrentVehicleType'", __cAOp, __cDiagValueArray, "Codingstring.VehicleType");
+          __bSetInCheckAlignment = 0;
+        }
+      }
+      {
+        __DiagGetParameter(__resp, "Codingstring.WindowLift_Support", __bDiagValueArray, __cDiagValueArray);
+        {
+        
+          __bSetInCheckAlignment = 1;	
+          sysSetVariableString(sysvarString::`TestUnit::`CurrentWindowLiftSupport, __cDiagValueArray);
+          __ReportTableRow(0, "System variable 'CurrentWindowLiftSupport'", __cAOp, __cDiagValueArray, "Codingstring.WindowLift_Support");
+          __bSetInCheckAlignment = 0;
+        }
+      }
+      {
+        __DiagGetParameter(__resp, "VehicleSpeedToLockDoor", __nDouble);
+        {
+        
+          __bSetInCheckAlignment = 1;	
+          @sysvarInt::`TestUnit::`CurrentVehicleSpeedToLockDoor = __nDouble;
+          __ReportTableRow(0, "System variable 'CurrentVehicleSpeedToLockDoor'", __cAOp, __nDouble, "VehicleSpeedToLockDoor");
+          __bSetInCheckAlignment = 0;
+        }
+      }
+      {
+        __DiagGetParameter(__resp, "Codingstring.CountryType", __bDiagValueArray, __cDiagValueArray);
+        {
+        
+          __bSetInCheckAlignment = 1;	
+          sysSetVariableString(sysvarString::`TestUnit::`CurrentCountryType, __cDiagValueArray);
+          __ReportTableRow(0, "System variable 'CurrentCountryType'", __cAOp, __cDiagValueArray, "Codingstring.CountryType");
+          __bSetInCheckAlignment = 0;
+        }
+      }
+      __ReportTableEndVerdict(__cEvaluateResponse, __res);
+  	__bVerdict = __bVerdict && __res;
+    }
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "Set Vehicle Type to \"Transporter\"", "3");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "Variant_Coding_Write" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+        {
+          sysGetVariableString(sysvarString::`TestUnit::`CurrentCountryType, __cArray, elCount(__cArray));
+          __res = __DiagSetParameter(__req, "Codingstring.CountryType", __cArray);
+          if(__res < 0)
+          {
+            __bVerdict = __eVerdictFail;
+            __DiagErrCodeTestStep(__res, "Cannot set diagnostic parameter 'Codingstring.CountryType'");
+            break;
+          }
+        }
+        {
+          snprintf(__cArray, 2048, "%s", "Transporter");
+          __res = __DiagSetParameter(__req, "Codingstring.VehicleType", __cArray);
+          if(__res < 0)
+          {
+            __bVerdict = __eVerdictFail;
+            __DiagErrCodeTestStep(__res, "Cannot set diagnostic parameter 'Codingstring.VehicleType'");
+            break;
+          }
+        }
+        {
+          sysGetVariableString(sysvarString::`TestUnit::`CurrentWindowLiftSupport, __cArray, elCount(__cArray));
+          __res = __DiagSetParameter(__req, "Codingstring.WindowLift_Support", __cArray);
+          if(__res < 0)
+          {
+            __bVerdict = __eVerdictFail;
+            __DiagErrCodeTestStep(__res, "Cannot set diagnostic parameter 'Codingstring.WindowLift_Support'");
+            break;
+          }
+        }
+        {
+          __res = __DiagSetParameter(__req, "VehicleSpeedToLockDoor", @sysvarInt::`TestUnit::`CurrentVehicleSpeedToLockDoor);
+          if(__res < 0)
+          {
+            __bVerdict = __eVerdictFail;
+            __DiagErrCodeTestStep(__res, "Cannot set diagnostic parameter 'VehicleSpeedToLockDoor'");
+            break;
+          }
+        }
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "WDBI_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'WDBI_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'WDBI_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+}
+
+void Tt0_Tet_Tc4()
+{
+  CreateTTEIFFunction("Tt0_Tc4", __eTcDef, __eLocal);  
+  CallInterfaceFunction("04 Read Fault Memory", __cEmpty , __cEmpty );
+}
+testcase Tt0_Tc4()
+{	
+  SetBreakOnFail(1);
+
+  TestCommandBegin(__eFaultMemoryClear, __cFaultMemoryClear, "", "0");
+  {
+    long __res;
+    long __dtc;
+    
+    __DiagSetTarget("DoorFL");
+  
+    DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+    TestStep("Query fault memory", "Clearing fault memory of target Diagnostic ECU 'DoorFL'");
+  
+    __res = TestWaitForDiagTroubleCodesCleared(-1, cDiagAppTimeoutDefault);
+    if (__EvaluateWaitResWithVerdict(__res, 1, "DTC cleared successfully"))
+      TestReportWriteFaultMemoryDetails(__bVerdict); }
+  TestCommandEnd();
+
+  {
+    CreateTTEIFFunction("Tt0_StoreTwoDTCs", __eFct, __eLocal);
+    CallInterfaceFunction(__cEmpty, __cEmpty, __cEmpty);
+  }
+
+
+  TestCommandBegin(__eFaultMemoryDtc, __cFaultMemoryDtc, "", "2");
+  {
+    long  __res;
+    dword __statusByte;
+   
+    __DiagSetTarget("DoorFL");
+    DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+    TestStep("Query fault memory", "Reading DTCs from diagnostic ECU 'DoorFL'");
+  
+    __statusByte = -1;
+  
+    __res = TestWaitForDiagTroubleCodes(__statusByte, cDiagAppTimeoutDefault);
+    if(__EvaluateWaitResWithVerdict(__res, 1))
+    {
+      __bVerdict = __eVerdictPass;
+      // DTC Content
+      {
+        long  __expectedDtc;
+        long  __statusReceived;
+      
+        __expectedDtc = 0x1;
+        __statusReceived = DiagGetDtcStatus(__expectedDtc);
+        if (__statusReceived < 0)
+        {
+          __bVerdict = __eVerdictFail;
+          snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'P000001\'");
+          TestStepFail(__cEmpty, "Mandatory DTC 0x%lX%s and status not found.", __expectedDtc, __cArray);
+        }
+        else
+        {
+          long __match;
+          __match = 1;
+      
+          if (__match)
+          {
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'P000001\'");
+            TestStepPass(__cEmpty, "Mandatory DTC 0x%lX%s found with matching status.", __expectedDtc, __cArray);
+          }
+          else
+          {
+            __bVerdict = __eVerdictFail;
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'P000001\'");
+            TestStepFail(__cEmpty, "Mandatory DTC 0x%lX%s and status not found.", __expectedDtc, __cArray);
+          }
+        }
+      }
+      // DTC Content
+      {
+        long  __expectedDtc;
+        long  __statusReceived;
+      
+        __expectedDtc = 0x2;
+        __statusReceived = DiagGetDtcStatus(__expectedDtc);
+        if (__statusReceived < 0)
+        {
+          __bVerdict = __eVerdictFail;
+          snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'P000002\'");
+          TestStepFail(__cEmpty, "Mandatory DTC 0x%lX%s and status not found.", __expectedDtc, __cArray);
+        }
+        else
+        {
+          long __match;
+          __match = 1;
+      
+          if (__match)
+          {
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'P000002\'");
+            TestStepPass(__cEmpty, "Mandatory DTC 0x%lX%s found with matching status.", __expectedDtc, __cArray);
+          }
+          else
+          {
+            __bVerdict = __eVerdictFail;
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'P000002\'");
+            TestStepFail(__cEmpty, "Mandatory DTC 0x%lX%s and status not found.", __expectedDtc, __cArray);
+          }
+        }
+      }
+      // DTC Content
+      {
+        long  __expectedDtc;
+        long  __statusReceived;
+      
+        __expectedDtc = 0x800001;
+        __statusReceived = DiagGetDtcStatus(__expectedDtc);
+        if (__statusReceived < 0)
+        {
+          snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000001\'");
+          TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found.", __expectedDtc, __cArray);
+        }
+        else
+        {
+          long __match;
+          __match = 1;
+      
+          if (__match)
+          {
+            __bVerdict = __eVerdictFail;
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000001\'");
+            TestStepFail(__cEmpty, "Not allowed DTC 0x%lX%s found.", __expectedDtc, __cArray);
+          }
+          else
+          {
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000001\'");
+            TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found. Status not found.", __expectedDtc, __cArray);
+          }
+        }
+      }
+      // DTC Content
+      {
+        long  __expectedDtc;
+        long  __statusReceived;
+      
+        __expectedDtc = 0x800002;
+        __statusReceived = DiagGetDtcStatus(__expectedDtc);
+        if (__statusReceived < 0)
+        {
+          snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000002\'");
+          TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found.", __expectedDtc, __cArray);
+        }
+        else
+        {
+          long __match;
+          __match = 1;
+      
+          if (__match)
+          {
+            __bVerdict = __eVerdictFail;
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000002\'");
+            TestStepFail(__cEmpty, "Not allowed DTC 0x%lX%s found.", __expectedDtc, __cArray);
+          }
+          else
+          {
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000002\'");
+            TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found. Status not found.", __expectedDtc, __cArray);
+          }
+        }
+      }
+      // DTC Content
+      {
+        long  __expectedDtc;
+        long  __statusReceived;
+      
+        __expectedDtc = 0x800003;
+        __statusReceived = DiagGetDtcStatus(__expectedDtc);
+        if (__statusReceived < 0)
+        {
+          snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000003\'");
+          TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found.", __expectedDtc, __cArray);
+        }
+        else
+        {
+          long __match;
+          __match = 1;
+      
+          if (__match)
+          {
+            __bVerdict = __eVerdictFail;
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000003\'");
+            TestStepFail(__cEmpty, "Not allowed DTC 0x%lX%s found.", __expectedDtc, __cArray);
+          }
+          else
+          {
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000003\'");
+            TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found. Status not found.", __expectedDtc, __cArray);
+          }
+        }
+      }
+      // DTC Content
+      {
+        long  __expectedDtc;
+        long  __statusReceived;
+      
+        __expectedDtc = 0x800004;
+        __statusReceived = DiagGetDtcStatus(__expectedDtc);
+        if (__statusReceived < 0)
+        {
+          snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000004\'");
+          TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found.", __expectedDtc, __cArray);
+        }
+        else
+        {
+          long __match;
+          __match = 1;
+      
+          if (__match)
+          {
+            __bVerdict = __eVerdictFail;
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000004\'");
+            TestStepFail(__cEmpty, "Not allowed DTC 0x%lX%s found.", __expectedDtc, __cArray);
+          }
+          else
+          {
+            snprintf(__cArray, 2048, "(%s)", "Diagnostic trouble code \'B000004\'");
+            TestStepPass(__cEmpty, "Not allowed DTC 0x%lX%s not found. Status not found.", __expectedDtc, __cArray);
+          }
+        }
+      }
+    
+      TestReportWriteFaultMemoryDetails(__bVerdict);  
+    }
+  }
+  TestCommandEnd();
+
+}
+
+void Tt0_Tet_CaplTcCall0()
+{
+  CreateCaplIFFunction("TCSendDiagnosticRequest", __eTcDef);
+  AddIFParameterInt(05);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall1()
+{
+  CreateCaplIFFunction("TCSetDoorContacts", __eTcDef);
+  AddIFParameterInt(06);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall2()
+{
+  CreateCaplIFFunction("TCReadSerialNumber", __eTcDef);
+  AddIFParameterInt(07);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall3()
+{
+  CreateCaplIFFunction("TCReadFaultMemory", __eTcDef);
+  AddIFParameterInt(08);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall4()
+{
+  CreateCaplIFFunction("TCReadExtendedData", __eTcDef);
+  AddIFParameterInt(09);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall5()
+{
+  CreateCaplIFFunction("TCReadSnapshotData", __eTcDef);
+  AddIFParameterInt(10);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall6()
+{
+  CreateCaplIFFunction("TCDownload", __eTcDef);
+  AddIFParameterInt(11);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall7()
+{
+  CreateCaplIFFunction("TCDetermineVariant", __eTcDef);
+  AddIFParameterInt(12);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_CaplTcCall8()
+{
+  CreateCaplIFFunction("TCWriteAndReadMuxData", __eTcDef);
+  AddIFParameterInt(13);
+  CallInterfaceFunction(__cEmpty , "", __cEmpty );
+}
+
+void Tt0_Tet_Tc5()
+{
+  CreateTTEIFFunction("Tt0_Tc5", __eTcDef, __eLocal);  
+  CallInterfaceFunction("99 Hard Reset", __cEmpty , __cEmpty );
+}
+testcase Tt0_Tc5()
+{	
+  SetBreakOnFail(1);
+
+    
+  TestCommandBegin(__eDiagService, __cDiagService, "", "0");
+  {
+    long __res, __paramLen, __bytePos;
+    DiagResponse * __resp;
+    DiagRequest "Hard_Reset_Reset" __req;
+  
+    __bVerdict = __eVerdictPass;
+  
+    do {
+      if(!__DiagSetTarget("DoorFL"))
+        break;
+  
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel(EnumServiceDetails_onfail);
+      // Request aspect
+      {
+  
+        if (0 >= __DiagSendReqAndWaitForResp(__req, -1, (long)2000, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+          break;
+      }
+  
+      __res = __req.GetLastResponse(__resp);
+      __res = __DiagErrCodeTestStep(__res, "Can't retrieve last response for request! No check possible.") < 0;
+      if(__res)
+      {
+  	  __bVerdict = __eVerdictFail;
+        break;
+      }
+      {
+        __res = DiagInterpretAs(__resp, "ER_PR");
+        if(__res != 0)
+        {
+          __bVerdict = __eVerdictFail;
+          __DiagErrCodeTestStep(__res, "Can't interpret response as diagnostic primitive 'ER_PR'.");
+          break;
+        }
+        else
+        {
+          TestStepPass( "Received primitive can be interpreted as diagnostic primitive 'ER_PR'.");
+        }
+      }
+    }
+    while(0);
+  
+  
+    if (__bVerdict == __eVerdictFail)
+      TestReportWriteDiagObjectList();
+  }
+  TestCommandEnd();
+
+}
+

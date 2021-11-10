@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<tclibrary>
+  <testcase name="TCDownload" comment="===================================================================================&#xA;Testcase: Download data to an ECU&#xA;===================================================================================&#xA;" signature="testcase TCDownload(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\CAPL_Includes\Download_Tester.cin" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>1166</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCDetermineVariant" comment="&#xA;Switch to identified variant for further thests&#xA;Example: Read configured variant in CANoe before and after switching the variant to the identified variant&#xA;&#xA;" signature="testcase TCDetermineVariant(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>1973</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCSendDiagnosticRequest" comment="&#xA;Create and send a diagnostic request&#xA;Example: Send a request for reading the serial number of the ECU&#xA;&#xA;" signature="testcase TCSendDiagnosticRequest(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>4297</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCSetDoorContacts" comment="&#xA;Set the parameters of a request&#xA;Example: Set status of door contacts but do not evaluate the response (ignore the negative response)&#xA;Note: There is no check in this test case whether the response was positive or negative since the&#xA;main focus of this example is setting parameter values&#xA;&#xA;" signature="testcase TCSetDoorContacts(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>5383</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCReadSerialNumber" comment="&#xA;Send a request, receive a response and check the response parameter values&#xA;Example: Read and check the serial number of the ECU&#xA;&#xA;" signature="testcase TCReadSerialNumber(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>6953</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCReadFaultMemory" comment="&#xA;Read the fault memory&#xA;Example: Generate a low voltage DTC and check whether the DTC was correctly stored&#xA;&#xA;" signature="testcase TCReadFaultMemory(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>8243</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCReadExtendedData" comment="&#xA;Read extended data of a DTC&#xA;Example: Generate a low voltage DTC and check whether the extended data of the DTC was correctly stored&#xA;&#xA;" signature="testcase TCReadExtendedData(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>11355</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCReadSnapshotData" comment="&#xA;Read snapshot data of a DTC&#xA;Example: Generate a low voltage DTC and check whether the snapshot data of the DTC was correctly stored&#xA;&#xA;" signature="testcase TCReadSnapshotData(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>14082</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+  <testcase name="TCWriteAndReadMuxData" comment="&#xA;Write and read multiplexed data&#xA;Example: At first write the data and then read it back and compare the read and written data&#xA;Note that the service used is only available in the variant &quot;DevSample&quot; (i.e. TCDetermineVariant() has to be performed before)&#xA;&#xA;" signature="testcase TCWriteAndReadMuxData(int tcId)" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testmodules\CAPL_Testcases_ECU1.can" SourceFilePersistencyGuid="oiubg0gad1l9" IsPrivate="false" IsNetSignatureAndDefinedInExternalDll="true">
+    <parameter name="tcId" type="int" raw_type="int" />
+    <document_position><![CDATA[<OffsetDocumentPosition xmlns:SerializedType="Vector.ITE.Document.OffsetDocumentPosition"><Offset>15576</Offset></OffsetDocumentPosition>]]></document_position>
+    <implementation_language lang="CAPL" />
+  </testcase>
+</tclibrary>

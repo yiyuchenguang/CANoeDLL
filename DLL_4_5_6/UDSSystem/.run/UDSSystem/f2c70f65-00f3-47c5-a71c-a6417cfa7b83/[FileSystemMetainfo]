@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<FileSystemMetainfo>
+  <Files>
+    <File Name="build.log" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="build.log" /&gt;</SerializedBasedFileName>
+      <CreationTime>2017-07-19T11:35:36.6111870+02:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.8651599+01:00</LastWriteTime>
+    </File>
+    <File Name="CAPL_Testcases_ECU1.can" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="CAPL_Testcases_ECU1.can" /&gt;</SerializedBasedFileName>
+      <CreationTime>2017-07-19T11:35:36.6041863+02:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.7711599+01:00</LastWriteTime>
+    </File>
+    <File Name="DiagTest.vtt" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="DiagTest.vtt" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-03-19T17:09:08.2231599+01:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.2231599+01:00</LastWriteTime>
+    </File>
+    <File Name="DiagTest.vtumanifest" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="DiagTest.vtumanifest" /&gt;</SerializedBasedFileName>
+      <CreationTime>2017-07-19T11:35:36.6091868+02:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.8521599+01:00</LastWriteTime>
+    </File>
+    <File Name="TestSysVars.vsysvar" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="TestSysVars.vsysvar" /&gt;</SerializedBasedFileName>
+      <CreationTime>2017-07-20T14:52:45.2020156+02:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.8011599+01:00</LastWriteTime>
+    </File>
+    <File Name="[FileSystemMetainfo]" Time="Mittwoch, 19. Juli 2017 11:39:55">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="[FileSystemMetainfo]" /&gt;</SerializedBasedFileName>
+      <CreationTime>2017-07-19T11:39:55.9810239+02:00</CreationTime>
+      <LastWriteTime>2017-07-19T11:39:55.9810239+02:00</LastWriteTime>
+    </File>
+    <File Name="[MakeInfo]" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="[MakeInfo]" /&gt;</SerializedBasedFileName>
+      <CreationTime>2017-07-19T11:35:36.6101869+02:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.8641599+01:00</LastWriteTime>
+    </File>
+    <File Name="CAPL_Testcases_ECU1.can.export.xml" Time="Dienstag, 16. Januar 2018 14:40:24">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="__ExpTbl_\CAPL_Testcases_ECU1.can.export.xml" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-01-16T14:40:24.4407030+01:00</CreationTime>
+      <LastWriteTime>2018-01-16T14:40:24.4407030+01:00</LastWriteTime>
+    </File>
+    <File Name="DiagTest.vtt.export.xml" Time="Dienstag, 16. Januar 2018 14:40:24">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="__ExpTbl_\DiagTest.vtt.export.xml" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-01-16T14:40:24.4407030+01:00</CreationTime>
+      <LastWriteTime>2018-01-16T14:40:24.4407030+01:00</LastWriteTime>
+    </File>
+    <File Name="CAPL_Testcases_ECU1.cbf" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="__TsoBuildFiles_\CAPL_Testcases_ECU1.cbf" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-01-16T14:40:24.6287030+01:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.4621599+01:00</LastWriteTime>
+    </File>
+    <File Name="DiagTest.vxtx" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="__TsoBuildFiles_\DiagTest.vxtx" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-01-16T14:40:24.6827030+01:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.6601599+01:00</LastWriteTime>
+    </File>
+    <File Name="DiagTest.vxtx.can" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="__TsoBuildFiles_\DiagTest.vxtx.can" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-01-16T14:40:24.8297030+01:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.6661599+01:00</LastWriteTime>
+    </File>
+    <File Name="DiagTest.vxtx.cbf" Time="Montag, 19. März 2018 17:09:08">
+      <SerializedBasedFileName>&lt;VFileName v="V5" f="BQL" init="1" base="cfg" name="__TsoBuildFiles_\DiagTest.vxtx.cbf" /&gt;</SerializedBasedFileName>
+      <CreationTime>2018-01-16T14:40:24.8797030+01:00</CreationTime>
+      <LastWriteTime>2018-03-19T17:09:08.7151599+01:00</LastWriteTime>
+    </File>
+  </Files>
+</FileSystemMetainfo>

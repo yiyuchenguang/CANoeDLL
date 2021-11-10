@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<testtree>
+  <title></title>
+  <version>1</version>
+  <caplfunction>
+    <name>Tt0_Tet_TtInit</name>
+  </caplfunction>
+  <testcase>
+    <title>01 Serial Number Read Door FL + FR</title>
+    <testcaseid>00e528ec-8d27-4a7e-8c14-5aef3bfc8024</testcaseid>
+    <caplfunction>
+      <name>Tt0_Tet_Tc0</name>
+    </caplfunction>
+  </testcase>
+  <testcase>
+    <title>01.1 Serial Number Read (functional) Door FL + FR</title>
+    <testcaseid>7b4a8bf5-e22d-4fa0-9ef3-accd4344f0a1</testcaseid>
+    <caplfunction>
+      <name>Tt0_Tet_Tc1</name>
+    </caplfunction>
+  </testcase>
+  <testcase>
+    <title>02 Check Door Contacts</title>
+    <testcaseid>7158d7d6-6234-440c-92f8-26cc4b9ca254</testcaseid>
+    <caplfunction>
+      <name>Tt0_Tet_Tc2</name>
+    </caplfunction>
+  </testcase>
+  <testcase>
+    <title>03 Unlock and write variant coding</title>
+    <testcaseid>e8d29392-96c4-4a1f-a773-e57fc43a8185</testcaseid>
+    <caplfunction>
+      <name>Tt0_Tet_Tc3</name>
+    </caplfunction>
+  </testcase>
+  <testcase>
+    <title>04 Read Fault Memory</title>
+    <testcaseid>9824d247-2797-449d-806d-4baf6cc64a29</testcaseid>
+    <caplfunction>
+      <name>Tt0_Tet_Tc4</name>
+    </caplfunction>
+  </testcase>
+  <testgroup>
+    <title>CAPL Testcases</title>
+    <testcase>
+      <title>05 Create and send a diagnostic request</title>
+      <testcaseid>3f5576d2-bb6e-4680-86ec-8897d8d4722f</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall0</name>
+      </caplfunction>
+    </testcase>
+    <testcase>
+      <title>06 Set parameter of a request</title>
+      <testcaseid>96b35bf5-9317-4abf-aa50-de1e4006b067</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall1</name>
+      </caplfunction>
+    </testcase>
+    <testcase>
+      <title>07 Send a request, receive a response and check the response parameter values</title>
+      <testcaseid>2849fd07-c7f2-47ca-815e-ffcd8ef2a124</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall2</name>
+      </caplfunction>
+    </testcase>
+    <testcase>
+      <title>08 Read fault memory via CAPL</title>
+      <testcaseid>38b75909-b364-4a3b-9ef0-95188a12d457</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall3</name>
+      </caplfunction>
+    </testcase>
+    <testcase>
+      <title>09 Read extended data via CAPL</title>
+      <testcaseid>73914a28-ebeb-42c8-954c-65d624f8c190</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall4</name>
+      </caplfunction>
+    </testcase>
+    <testcase>
+      <title>10 Read snapshot data via CAPL</title>
+      <testcaseid>60d4ddde-4fb1-4f63-9984-7b0c15eee10a</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall5</name>
+      </caplfunction>
+    </testcase>
+    <testcase>
+      <title>11 Download</title>
+      <testcaseid>8f9fdb5c-3562-453b-b87b-c53196a485e8</testcaseid>
+      <caplfunction>
+        <name>Tt0_Tet_CaplTcCall6</name>
+      </caplfunction>
+    </testcase>
+    <testgroup>
+      <title>MUX data</title>
+      <testcase>
+        <title>12 Determine and set variant</title>
+        <testcaseid>f2651cf4-072b-47dc-ac19-a3db70c97362</testcaseid>
+        <caplfunction>
+          <name>Tt0_Tet_CaplTcCall7</name>
+        </caplfunction>
+      </testcase>
+      <testcase>
+        <title>13 Write and Read Mux Data</title>
+        <testcaseid>675984a5-0c4e-4e57-a20c-d84a42df6891</testcaseid>
+        <caplfunction>
+          <name>Tt0_Tet_CaplTcCall8</name>
+        </caplfunction>
+      </testcase>
+    </testgroup>
+  </testgroup>
+  <testcase>
+    <title>99 Hard Reset</title>
+    <testcaseid>67fcc568-5d33-4bb5-97a6-4264f8cb8169</testcaseid>
+    <caplfunction>
+      <name>Tt0_Tet_Tc5</name>
+    </caplfunction>
+  </testcase>
+</testtree>

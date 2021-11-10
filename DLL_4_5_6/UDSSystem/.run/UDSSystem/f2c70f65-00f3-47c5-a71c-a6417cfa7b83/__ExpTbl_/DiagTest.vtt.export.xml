@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<tclibrary>
+  <function name="StoreTwoDTCs" comment="" signature="" file="D:\08_Subversion\DemosTrunk\CANoe Sample Configurations\CAN\Diagnostics\UDSSystem\Testunits\DiagTest\DiagTest.vtt" SourceFilePersistencyGuid="hmu4ngn2rpp9" IsPrivate="true" IsNetSignatureAndDefinedInExternalDll="true">
+    <document_position><![CDATA[<XPathDocumentPosition xmlns:SerializedType="Vector.ITE.Document.XPathDocumentPosition"><XPath>/ttroot/ttlib[1]/function_definitions[1]/function_definition[1]/name[1]</XPath></XPathDocumentPosition>]]></document_position>
+    <implementation_language lang="TTE" />
+  </function>
+</tclibrary>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<systemvariables version="4">
+  <namespace name="" comment=""><namespace name="DiagTestConfiguration" comment=""><namespace name="DiagTest" comment="">
+    <namespace name="TestUnit" comment="" interface="">
+      <variable anlyzLocal="2" readOnly="false" valueSequence="false" unit="" name="CurrentCountryType" comment="" bitcount="80" isSigned="false" encoding="65001" type="string" />
+      <variable anlyzLocal="2" readOnly="false" valueSequence="false" unit="" name="CurrentVehicleSpeedToLockDoor" comment="" bitcount="32" isSigned="false" encoding="65001" type="int" />
+      <variable anlyzLocal="2" readOnly="false" valueSequence="false" unit="" name="CurrentVehicleType" comment="" bitcount="80" isSigned="false" encoding="65001" type="string" />
+      <variable anlyzLocal="2" readOnly="false" valueSequence="false" unit="" name="CurrentWindowLiftSupport" comment="" bitcount="80" isSigned="false" encoding="65001" type="string" />
+    </namespace>
+  </namespace></namespace></namespace>
+</systemvariables>

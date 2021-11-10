@@ -1,0 +1,2716 @@
+﻿/* !Encoding: 65001  */
+// Generated with version 2.2.49.0
+variables
+{
+  // global general purpose buffers
+  char _ttg_B0[2000];
+  char _ttg_B1[2000];
+  char _ttg_B[2000];
+  char _ttg_Z[2000];
+  char _ttg_BR[2000];
+  long _ttg_verdict;
+  long _ttg_Re;
+  long _ttg_TestActionFailCnt;
+  long _ttg_TestStepInitOk;
+  int64 _ttg_I64;
+  double _ttg_Double;
+  dword _ttg_gBusContextNew = 0;
+  dword _ttg_gBusContextOld = 0;
+  int64 _ttg_gBusContextOk = 0;
+  // enums
+  enum EVerdBOF
+  {
+    EVerdBOF_None = 0,
+    EVerdBOF_TC = 1,
+    EVerdBOF_TS = 2
+  }
+  ;
+  enum EnumServiceDetails
+  {
+    EnumServiceDetails_onfail = 0,
+    EnumServiceDetails_never = 1,
+    EnumServiceDetails_always = 2
+  }
+  ;
+  enum EnumResult
+  {
+    EnumResult_pos = 0,
+    EnumResult_neg = 1,
+    EnumResult_any = 2,
+    EnumResult_none = 3,
+    EnumResult_none_or_pos = 4,
+    EnumResult_ignore = 5,
+    EnumResult_ignoreall = 6
+  }
+  ;
+  enum EnumSendingMode
+  {
+    EnumSendingMode_physical = 0,
+    EnumSendingMode_functional = 1
+  }
+  ;
+  enum EnumSuppressPosResBit
+  {
+    EnumSuppressPosResBit_asconfigured = 0,
+    EnumSuppressPosResBit_set = 1,
+    EnumSuppressPosResBit_clear = 2
+  }
+  ;
+  enum EnumVerdictOnInvalidValues
+  {
+    EnumVerdictOnInvalidValues_no_impact = 0,
+    EnumVerdictOnInvalidValues_warning = 1,
+    EnumVerdictOnInvalidValues_fail = 2
+  }
+  ;
+  // FlexRay configuration
+  FRConfiguration _ttg_gFRConfiguration;
+  long _ttg_gFRNumberOfStaticSlots[32];
+  long _ttg_gFRPayloadLengthStatic[32];
+  // globals for user defined variables
+  // global declarations
+  byte gDiagValueRaw[4096];
+  char gDiagValueStr[4096*3];
+  const cDiagAppTimeoutDefault = 10000;
+  long gLocalVerdict = 0;
+}
+void _fct_Wait(char step[], int64 timeInNs, int64 unitInNs, char valueSymbol[])
+{
+  char b[400];
+  double timeValueByUnit;
+
+  timeValueByUnit = (double)timeInNs / (double)unitInNs;
+
+  if(unitInNs == 1LL)
+  {
+    if(valueSymbol[0] == 0)
+      snprintf(b, elcount(b), "%I64d ns", timeInNs);
+    else
+      snprintf(b, elcount(b), "%I64d (%s) ns", timeInNs, valueSymbol);
+  }
+  else if(unitInNs == 1000LL)
+  {
+    if(valueSymbol[0] == 0)
+      snprintf(b, elcount(b), "%.3f us", timeValueByUnit);
+    else
+      snprintf(b, elcount(b), "%.3f (%s) us", timeValueByUnit, valueSymbol);
+  }
+  else if(unitInNs == 1000000LL)
+  {
+    if(valueSymbol[0] == 0)
+      snprintf(b, elcount(b), "%.3f ms", timeValueByUnit);
+    else
+      snprintf(b, elcount(b), "%.3f (%s) ms", timeValueByUnit, valueSymbol);
+  }
+  else if(unitInNs == 1000000000LL)
+  {
+    if(valueSymbol[0] == 0)
+      snprintf(b, elcount(b), "%.3f s", timeValueByUnit);
+    else
+      snprintf(b, elcount(b), "%.3f (%s) s", timeValueByUnit, valueSymbol);
+  }
+  else
+    testStepErrorInTestSystem(0, step, "Internal error: invalid time unit: %I64d", unitInNs);
+
+  if(timeInNs > 0)
+  {
+    if(0 == testWaitForTimeoutNS(timeInNs))
+      testStepEndWait(2, step, "Waited for %s", b);
+    else
+      testStepErrorInTestSystem(0, step, "Waited for %s", b);
+  }
+  else if(timeInNs  == 0)
+  {
+    // do not wait
+    testStepEndWait(2, step, "Waited for %s", b);
+  }
+  else
+  {
+    testStepErrorInTestSystem(0, step, "Unable to wait for %s. Please check input parameter.", b);
+  }
+}
+
+void _fct_CommandVerdict(long verdict)
+{
+  if(_ttg_verdict == 1) // failed
+    return; // setting verdict from 'failed' to 'pass' is not possible
+  _ttg_verdict = verdict;
+}
+
+int _fct_DoStop(enum EVerdBOF verdictSource, int doBreakOnFail)
+{
+  long verdict;
+
+  switch (verdictSource)
+  {
+    case EVerdBOF_TC: verdict = TestGetVerdictLastTestCase(); break;
+    case EVerdBOF_TS: verdict = TestGetVerdictLastTestSequence(); break;
+    default: verdict = 0; break; // Note: error in test system will only be checked inside TS/TC body
+  }
+
+  if (doBreakOnFail && verdict == 1 /*fail*/ && !testIsBreakOnFailDeactivated())
+    return 1; // stop execution because current verdict is 'Fail'
+
+  if (testIsStopRequested() /*user pressed stop button*/ || verdict == 4 /*error in testsystem*/)
+    return 1; // stop execution
+
+  return 0;
+}
+
+int _fct_LoopIsBlocking()
+{ 
+  // works for nested loops, too
+  int64 timeLoopNow, timeLoopOld, cntTimeEqual;
+  timeLoopNow = timeNowInt64();
+  if(timeLoopNow > timeLoopOld)
+  {
+    cntTimeEqual = 0;
+  }
+  else
+  {
+    ++cntTimeEqual;
+    if(cntTimeEqual >= 1000)
+    {
+      // busy loop detected
+      testStepErrorInTestSystem(0, "", "Blocking loop detected. Aborted after 1000 cycles have been performed at the same time.");
+      return 1;
+    }
+  }
+  timeLoopOld = timeLoopNow;
+  return 0;
+}
+
+void _fct_CallTsTc(char function[], dword fType, dword isExported, char title[], char testcaseid[])
+{
+  CreateTTEIFFunction(function, fType, isExported);
+  AddIFParameterTestCaseId(testcaseid);
+  CallInterfaceFunction(title,"");
+}
+
+void _fct_TestControlStructEnd(long count)
+{
+  // call TestControlStructEnd count times to close report scope in nested ifs
+  long i;
+  for(i = 0; i < count; ++i)
+    TestControlStructEnd(_ttg_verdict);
+}
+
+void _fct_ConditionTableHead(char inCondition[], int bCondition)
+{
+  char localBuf[2048];
+
+  snprintf(localBuf, elCount(localBuf), "%s: ", inCondition);
+  if(bCondition)
+    strncat(localBuf, "true", elCount(localBuf));
+  else
+    strncat(localBuf, "false", elCount(localBuf));
+
+  _fct_TiTableHeadExpectedEx(localBuf);
+}
+
+int _fct_DoElseIf(int bDone)
+{
+  if(bDone)
+  {
+    testStep(0, "", "Previous condition matched, skipping block.");
+    return 0;
+  }
+  return 1;
+}
+
+int _fct_DoElse(int bDone)
+{
+  if(bDone)
+  {
+    testStep(0, "", "Previous condition matched, skipping block.");
+    return 0;
+  }
+  else
+  {
+    testStep(0, "", "No condition matched, executing 'else' block.");
+    return 1;
+  }
+}
+
+// compare byte sequences - returns:
+// == 0 if byte sequences match 
+// != 0 otherwise
+long _fct_CompareBytes(byte leftSide[], long leftSideCnt, byte rightSide[], long rightSideCnt)
+{
+  DWORD i;
+
+  if (leftSideCnt > elCount(leftSide) || rightSideCnt > elCount(rightSide))
+  {
+    testStepErrorInTestSystem("_fct_CompareBytes: The buffer itself is not large enough, this should not happen!");
+    return -1;
+  }
+
+  if (leftSideCnt != rightSideCnt)
+    return leftSideCnt - rightSideCnt;
+
+  for (i = 0; i < leftSideCnt; i++)
+  {
+    if (leftSide[i] != rightSide[i])
+      return leftSide[i] - rightSide[i];
+  }
+
+  return 0; // sequences match
+}
+
+long _fct_AssignBytes(byte destination[], long destCnt, byte source[], long sourceCnt)
+{
+  long count;
+  count = _min(destCnt, sourceCnt);
+  memcpy(destination, source, count);
+  return count;
+}
+
+// Note EVAL00136179: convert 32 bit system variables to 64 bit values (value coherence for signed64/unsigned64 CAPL function overloads)
+int64 _SVC(sysvarInt *svi)
+{
+  dword _32BitUs;
+  
+  // Note: if we have a unsigned 32 bit sysvar, we need to convert it to a unsigned 32 bit integer first,
+  // before converting to 64 bit signed integer. Otherwise CAPL will interpret the SV value as signed and extend it to 64 bit,
+  // which will result in wrong values (above 2^31).
+  if (!IsSVSigned(svi))
+  {
+    _32BitUs = @svi;
+    return (int64)_32BitUs;
+  }
+  
+  return (int64)@svi;
+}
+
+void _fct_GetLastQualifier(char qualPathIn[], char lastQualOut[])
+{
+  long i, len, pos;
+
+  len = strlen(qualPathIn);
+
+  // find last separator ':'
+  pos = 0;
+  for (i = len-1; i > 0; --i)
+  {
+    if (qualPathIn[i] == ':')
+    {
+      pos = i;
+      break;
+    }
+  }
+
+  if (pos > 0 && pos != len)
+    substr_cpy_off(lastQualOut, 0, qualPathIn, pos + 1, -1, elcount(lastQualOut));
+  else
+    strncpy(lastQualOut, qualPathIn, elCount(lastQualOut));
+}
+
+void _fct_TiTableHeadInit()
+{
+  _ttg_TestActionFailCnt = 0;
+}
+
+void _fct_TiTableHead2Columns(char caption[], char c1[], char c2[])
+{
+  _fct_TiTableHeadInit();
+  _ttg_Re = testInfoTable(caption);
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell(c1);
+  _fct_TiCell(c2);
+  testInfoHeadingEnd(_ttg_Re);
+}
+
+void _fct_TiTableHead3Columns(char caption[], char c1[], char c2[], char c3[])
+{
+  _fct_TiTableHeadInit();
+  _ttg_Re = testInfoTable(caption);
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell(c1);
+  _fct_TiCell(c2);
+  _fct_TiCell(c3);
+  testInfoHeadingEnd(_ttg_Re);
+}
+
+void _fct_TiTableHeadAssignment()
+{
+  _fct_TiTableHead3Columns("Stimulation of values", "Symbol", "Op.", "Assigned");
+}
+
+void _fct_TiTableHeadAssignmentEx(char caption[])
+{
+  _fct_TiTableHead3Columns(caption, "Symbol", "Op.", "Assigned");
+}
+
+void _fct_TiTableHeadSetVariables()
+{
+  _fct_TiTableHead3Columns("Setting variable values", "Variable", "Op.", "Assigned");
+}
+
+void _fct_TiTableHeadSend(char msgDesc[])
+{
+  char b[256];
+  snprintf(b, elcount(b), "Send %s", msgDesc);
+  _fct_TiTableHead3Columns(b, "Signal/Byte", "Op.", "Assigned");
+}
+
+void _fct_TiTableFunctionCallReturnValue(char callSig[])
+{
+  char localBuf[256];
+  snprintf(localBuf, elCount(localBuf), "Function call: %s", callSig);
+  _fct_TiTableHead3Columns(localBuf, "Symbol", "Op.", "Return Value");
+}
+
+void _fct_TiTableWaveformStimulus()
+{
+  _fct_TiTableHead2Columns("Stimulation of values with waveform curves", "Symbol", "Stimulated with curve");
+}
+
+void _fct_TiTableHeadReport(char userText[])
+{
+  _fct_TiTableHead2Columns(userText, "Symbol", "Value");
+}
+
+void _fct_TiTableHeadAwaitSigAv(char text[])
+{
+  _fct_TiTableHead3Columns(text, "Signal/Node", "State", "Result");
+}
+void _fct_TiSignalsAvRow(long indent, long eventId, char reportIdent[]/*, Signal *s*/)
+{
+  _fct_TiRow(indent, reportIdent);
+
+  if (eventId >= 0)
+  {
+    if (eventId == 0) // already on bus
+    {
+      _fct_TiCell("already online");
+      _fct_TiCellResult(1);
+    }
+    else
+    {
+      int64 time;
+      long occurred;
+      occurred = testGetJoinedEventOccured(eventId, time);
+      if (occurred)
+        _fct_TiCell("online");
+      else
+        _fct_TiCell("not online yet");
+      _fct_TiCellResult(occurred);
+    }
+  }
+  else
+  { // note: this is a test environment error ...
+    _fct_TiCell("-");
+    _fct_TiCellResult(0);
+  }
+}
+
+void _fct_TiTableHeadExpected()
+{
+  _fct_TiTableHeadExpectedEx("Check of expected values");
+}
+
+void _fct_TiTableHeadExpectedEx(char title[])
+{
+  _fct_TiTableHeadInit();
+  _ttg_Re = testInfoTable(title);
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell("Symbol");
+  _fct_TiCell("Op.");
+  _fct_TiCell("Reference Value");
+  _fct_TiCell("Actual");
+  _fct_TiCell("Result");
+  testInfoHeadingEnd(_ttg_Re);
+}
+
+void _fct_TiTableHeadExpectedDtcAv(char caption[])
+{
+  //_fct_TiTableHead3Columns(title, "Symbol", "Status", "Result");
+  _fct_TiTableHeadInit();
+  _ttg_Re = testInfoTable(caption);
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell("Symbol");
+  _fct_TiCell("Status");
+  _fct_TiCell("Expected");
+  _fct_TiCell("Result");
+  testInfoHeadingEnd(_ttg_Re);
+}
+void _fct_TiTableRowExpectedDtcAv(int64 dtc, char dtcSymIdent[], int bSupported)
+{
+  long status;
+
+  snprintf(_ttg_BR, elCount(_ttg_BR), "DTC 0x%I64X%s", dtc, dtcSymIdent);
+  status = DiagGetDtcStatus(dtc);
+
+  // symbol
+  _fct_TiRow(0, _ttg_BR);
+
+  // status
+  if (status >= 0)
+    _fct_TiCell("supported");
+  else
+    _fct_TiCell("unsupported");
+
+  // expected result
+  if (bSupported)
+  {
+    _fct_TiCell("supported");
+    _fct_TiCellResult(status >= 0);
+  }
+  else
+  {
+    _fct_TiCell("unsupported");
+    _fct_TiCellResult(status < 0);
+  }
+}
+
+void _fct_TiTableHeadResponse(char msgDesc[], int numReceived)
+{
+  char b[200];
+  _fct_TiTableHeadInit();
+  if (numReceived == -1)
+    snprintf(b, elcount(b), "Response of %s", msgDesc); // maybe received after x MS?
+  else
+    snprintf(b, elcount(b), "Response of %s (received %d times)", msgDesc, numReceived);
+  _ttg_Re = testInfoTable(b);
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell("Signal/Byte");
+  _fct_TiCell("Op.");
+  _fct_TiCell("Reference Value");
+  if (numReceived == -1)
+    _fct_TiCell("Actual");
+  else
+    _fct_TiCell("Last Received");
+  _fct_TiCell("Result");
+  testInfoHeadingEnd(_ttg_Re);
+}
+
+void _fct_TiCell(char text[])
+{
+  testInfoCell(_ttg_Re, text);
+}
+
+void _fct_TiCellResult(long condition)
+{
+  if(condition)
+    _fct_TiCell("pass");
+  else
+  {
+    _fct_TiCell("fail");
+    ++_ttg_TestActionFailCnt;
+  }
+}
+
+void _fct_TiCellResultTrueFalse(long condition)
+{
+  if(condition)
+    _fct_TiCell("true");
+  else
+  {
+    _fct_TiCell("false");
+    ++_ttg_TestActionFailCnt;
+  }
+}
+
+void _fct_TiCell(int64 value)
+{
+  _fct_TiIntCell(value);
+}
+void _fct_TiIntCell(int64 value)
+{
+  snprintf(_ttg_BR, elcount(_ttg_BR), "%I64d", value);
+  _fct_TiCell(_ttg_BR);
+}
+void _fct_TiUIntCell(qword value)
+{
+  snprintf(_ttg_BR, elcount(_ttg_BR), "%I64u", value);
+  _fct_TiCell(_ttg_BR);
+}
+
+void _fct_TiCell(double value)
+{
+  _fct_TiFloatCell(value);
+}
+void _fct_TiFloatCell(double value)
+{
+  snprintf(_ttg_BR, elcount(_ttg_BR), "%.15g", value);
+  _fct_TiCell(_ttg_BR);
+}
+
+void _fct_TiRow(long indent, char firstCellContent[])
+{
+  testInfoRow(_ttg_Re, indent, firstCellContent);
+}
+
+void _fct_TiWriteByteX(int64 idx, char valueSymbol[], char nameOut[])
+{
+  if(valueSymbol[0] == 0)
+    snprintf(nameOut, elcount(nameOut), "Byte[%I64d]", idx);
+  else
+    snprintf(nameOut, elcount(nameOut), "Byte[%I64d (%s)]", idx, valueSymbol);
+}
+
+void _fct_TiTableEvaluation(char stepIdentifier[])
+{
+  if(_ttg_TestActionFailCnt > 0)
+  {
+    testStepFail(0, stepIdentifier, _ttg_Re);
+  }
+  else
+  {
+    testStepPass(2, stepIdentifier, _ttg_Re);
+  }
+}
+
+void _fct_TiTableEnd(char step[], long result, long restriction)
+{
+  testStep(2, step, _ttg_Re, result, restriction);
+}
+
+// write a byte stream as hex tuples into a given buffer ([size] 00 01 A0 ... )
+void _fct_TiWriteHexDataToStrBuf(char strBuf[], byte data[], long dataCnt)
+{
+  char tmp[16];
+  long limit, i;
+
+  const long dataMaxDisplayCnt = 32;
+
+  snprintf(strBuf, elcount(strBuf), "[%d] ", dataCnt);
+  limit = _min(dataMaxDisplayCnt, dataCnt);
+
+  // if we have more than 'maxCount' bytes ... print first 'maxCount-1' bytes, followed by "..." and the last byte of the sequence
+  if (dataCnt > dataMaxDisplayCnt)
+    limit--;
+
+  for (i = 0; i < limit; i++)
+  {
+    if (i == 0)
+      snprintf(tmp, elCount(tmp), "%02X", (int)data[i]);
+    else
+      snprintf(tmp, elCount(tmp), " %02X", (int)data[i]);
+
+    strncat(strBuf, tmp, elCount(strBuf));
+  }
+
+  if (dataCnt > dataMaxDisplayCnt)
+  {
+    snprintf(tmp, elCount(tmp), "... %02X", (int)data[dataCnt - 1]);
+    strncat(strBuf, tmp, elCount(strBuf));
+  }
+}
+
+void _fct_TiCell(byte rawBytes[], long count)
+{
+  const long dataMaxDisplayCnt = 32; // see _fct_TiWriteHexDataToStrBuf()
+  char byteDump[dataMaxDisplayCnt * 3 + 15]; // Only print up to 'maxCount' bytes in the first step -> also in "min..." below!
+
+  _fct_TiWriteHexDataToStrBuf(byteDump, rawBytes, count);
+
+  _fct_TiCell(byteDump);
+}
+void _fct_TiCellUpdateOccurred(dword updated)
+{
+  if (updated == 1)
+    _fct_TiCell("");
+  else
+    _fct_TiCell("(no update)");
+}
+void _fct_TiTableHeadExpectedUpdateOccurred(char title[])
+{
+  _fct_TiTableHeadInit();
+  _ttg_Re = testInfoTable(title);
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell("Symbol");
+  _fct_TiCell("Op.");
+  _fct_TiCell("Reference Value");
+  _fct_TiCell("Actual");
+  _fct_TiCell(""); // empty cell to report updates
+  _fct_TiCell("Result");
+  testInfoHeadingEnd(_ttg_Re);
+}
+void _fct_SetBusContext(char bus[], int saveOldBusContext)
+{
+  _ttg_gBusContextOk = 1;
+  _ttg_gBusContextNew = GetBusNameContext(bus);
+  if(_ttg_gBusContextNew == 0)
+  {
+    _ttg_gBusContextOk = 0;
+    testStepErrorInTestSystem("", "Error: Cannot determine context for bus: %s", bus);
+    _ttg_gBusContextOld = 0;
+    return;
+  }
+  if(saveOldBusContext == 1)
+  {
+    _ttg_gBusContextOld = SetBusContext(_ttg_gBusContextNew);
+  }
+  else
+  {
+    SetBusContext(_ttg_gBusContextNew);
+  }
+}
+
+void _fct_ResetBusContext()
+{
+  if(_ttg_gBusContextOld > 0)
+  {
+    SetBusContext(_ttg_gBusContextNew);
+  }
+}
+
+int _fct_BusContextOk()
+{
+  return _ttg_gBusContextOk;
+}
+
+
+// _fct_EnsureSymbolName(SysVarFloat)
+_fct_EnsureSymbolName(sysvarFloat * sym, char nameIn[], char nameOut[])
+{
+  if(strlen(nameIn) == 0)
+  {
+    snprintf(nameOut, elcount(nameOut), "System variable '%s'", sym.Name );
+  }
+  else { strncpy(nameOut, nameIn, elCount(nameOut)); }
+}
+
+// _fct_TiNameOpValue(Int64)
+_fct_TiNameOpValue(long indent, char nameIn[], char op[], int64 valueIn, char dstNameIn[])
+{
+  
+  _fct_TiRow(indent, nameIn);
+  _fct_TiCell(op);
+  if (strlen(dstNameIn) == 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%I64d", valueIn);
+  }
+  else
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%I64d (%s)", valueIn, dstNameIn);
+  }
+  _fct_TiCell(_ttg_BR);
+}
+_fct_TiNameOpValue(long indent, char nameIn[], char op[], qword valueIn, char dstNameIn[])
+{
+  
+  _fct_TiRow(indent, nameIn);
+  _fct_TiCell(op);
+  if (strlen(dstNameIn) == 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%I64u", valueIn);
+  }
+  else
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%I64u (%s)", valueIn, dstNameIn);
+  }
+  _fct_TiCell(_ttg_BR);
+}
+
+// _fct_Set(SysVarFloat,Int64)
+_fct_Set(sysvarFloat * dst, char dstName[], int64 src, char srcName[])
+{
+  char symDstBuf[256];
+  _fct_EnsureSymbolName(dst, dstName, symDstBuf);
+  @dst = src;
+  _fct_TiNameOpValue(0, symDstBuf, "=", src, srcName);
+}
+_fct_Set(sysvarFloat * dst, char dstName[], qword src, char srcName[])
+{
+  char symDstBuf[256];
+  _fct_EnsureSymbolName(dst, dstName, symDstBuf);
+  @dst = src;
+  _fct_TiNameOpValue(0, symDstBuf, "=", src, srcName);
+}
+
+// _fct_TiNameOpValue(Float)
+_fct_TiNameOpValue(long indent, char nameIn[], char op[], float valueIn, char dstNameIn[])
+{
+  
+  _fct_TiRow(indent, nameIn);
+  _fct_TiCell(op);
+  if (strlen(dstNameIn) == 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%.15g", valueIn);
+  }
+  else
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%.15g (%s)", valueIn, dstNameIn);
+  }
+  _fct_TiCell(_ttg_BR);
+}
+
+// _fct_Set(SysVarFloat,Float)
+_fct_Set(sysvarFloat * dst, char dstName[], float src, char srcName[])
+{
+  char symDstBuf[256];
+  _fct_EnsureSymbolName(dst, dstName, symDstBuf);
+  @dst = src;
+  _fct_TiNameOpValue(0, symDstBuf, "=", src, srcName);
+}
+
+// _fct_TiNameOpValue(String)
+_fct_TiNameOpValue(long indent, char nameIn[], char op[], char valueIn[], char dstNameIn[])
+{
+  
+  _fct_TiRow(indent, nameIn);
+  _fct_TiCell(op);
+  if (strlen(dstNameIn) == 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%s", valueIn);
+  }
+  else
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "%s (%s)", valueIn, dstNameIn);
+  }
+  _fct_TiCell(_ttg_BR);
+}
+
+void _ttg_fct_StoreTwoDTCs_1__312()
+{
+  TestCommandBegin(5, "Set", "");
+  {
+    _fct_TiTableHeadAssignment();
+    _fct_Set(sysvarFloat::`ExternalSignals::`SupplyVoltage, "System variable \'ExternalSignals::SupplyVoltage\'", 9LL, "");
+    _fct_TiTableEnd("1", 0, 0);
+  }
+  // _ttg_!_1__315
+  TestCommandEnd();
+  TestCommandBegin(0, "Wait", "");
+  {
+    _fct_Wait("1", (int64)(1.1 * 1000000000LL), 1000000000, "");
+  }
+  // _ttg_!_1__323
+  TestCommandEnd();
+  TestCommandBegin(5, "Set", "");
+  {
+    _fct_TiTableHeadAssignment();
+    _fct_Set(sysvarFloat::`ExternalSignals::`SupplyVoltage, "System variable \'ExternalSignals::SupplyVoltage\'", 15LL, "");
+    _fct_TiTableEnd("1", 0, 0);
+  }
+  // _ttg_!_1__329
+  TestCommandEnd();
+  TestCommandBegin(0, "Wait", "");
+  {
+    _fct_Wait("1", (int64)(1.1 * 1000000000LL), 1000000000, "");
+  }
+  // _ttg_!_1__337
+  TestCommandEnd();
+  TestCommandBegin(5, "Set", "");
+  {
+    _fct_TiTableHeadAssignment();
+    _fct_Set(sysvarFloat::`ExternalSignals::`SupplyVoltage, "System variable \'ExternalSignals::SupplyVoltage\'", 12.4, "");
+    _fct_TiTableEnd("1", 0, 0);
+  }
+  // _ttg_!_1__343
+  TestCommandEnd();
+  TestCommandBegin(0, "Wait", "");
+  {
+    _fct_Wait("1", (int64)(1.1 * 1000000000LL), 1000000000, "");
+  }
+  // _ttg_!_1__351
+  TestCommandEnd();
+}
+// _ttg_#_1__312
+void _ttg_fct_tt_1__8()
+{
+  // Init FlexRay configuration
+}
+// _ttg_#_1__8
+// 01 Serial Number Read Door FL + FR
+void _ttg_fct_tc_1__9()
+{
+  CreateTTEIFFunction("_ttg_tc_tc_1__9", 1, 0);
+  AddIFParameterTestCaseId("00e528ec-8d27-4a7e-8c14-5aef3bfc8024");
+  CallInterfaceFunction("01 Serial Number Read Door FL + FR", "");
+}
+// _ttg_#_1__9
+// 01.1 Serial Number Read (functional) Door FL + FR
+void _ttg_fct_tc_1__32()
+{
+  CreateTTEIFFunction("_ttg_tc_tc_1__32", 1, 0);
+  AddIFParameterTestCaseId("7b4a8bf5-e22d-4fa0-9ef3-accd4344f0a1");
+  CallInterfaceFunction("01.1 Serial Number Read (functional) Door FL + FR", "");
+}
+// _ttg_#_1__32
+// 02 Check Door Contacts
+void _ttg_fct_tc_1__49()
+{
+  CreateTTEIFFunction("_ttg_tc_tc_1__49", 1, 0);
+  AddIFParameterTestCaseId("7158d7d6-6234-440c-92f8-26cc4b9ca254");
+  CallInterfaceFunction("02 Check Door Contacts", "");
+}
+// _ttg_#_1__49
+// 03 Unlock and write variant coding
+void _ttg_fct_tc_1__114()
+{
+  CreateTTEIFFunction("_ttg_tc_tc_1__114", 1, 0);
+  AddIFParameterTestCaseId("e8d29392-96c4-4a1f-a773-e57fc43a8185");
+  CallInterfaceFunction("03 Unlock and write variant coding", "");
+}
+// _ttg_#_1__114
+// 04 Read Fault Memory
+void _ttg_fct_tc_1__172()
+{
+  CreateTTEIFFunction("_ttg_tc_tc_1__172", 1, 0);
+  AddIFParameterTestCaseId("9824d247-2797-449d-806d-4baf6cc64a29");
+  CallInterfaceFunction("04 Read Fault Memory", "");
+}
+// _ttg_#_1__172
+// 05 Create and send a diagnostic request
+void _ttg_fct_capltestcase_1__220()
+{
+  CreateCaplIFFunction("TCSendDiagnosticRequest", 1);
+  AddIFParameterTestCaseId("3f5576d2-bb6e-4680-86ec-8897d8d4722f");
+  AddIFParameterInt(5LL);
+  CallInterfaceFunction("05 Create and send a diagnostic request", "");
+}
+// _ttg_#_1__220
+// 06 Set parameter of a request
+void _ttg_fct_capltestcase_1__228()
+{
+  CreateCaplIFFunction("TCSetDoorContacts", 1);
+  AddIFParameterTestCaseId("96b35bf5-9317-4abf-aa50-de1e4006b067");
+  AddIFParameterInt(6LL);
+  CallInterfaceFunction("06 Set parameter of a request", "");
+}
+// _ttg_#_1__228
+// 07 Send a request, receive a response and check the response parameter values
+void _ttg_fct_capltestcase_1__236()
+{
+  CreateCaplIFFunction("TCReadSerialNumber", 1);
+  AddIFParameterTestCaseId("2849fd07-c7f2-47ca-815e-ffcd8ef2a124");
+  AddIFParameterInt(7LL);
+  CallInterfaceFunction("07 Send a request, receive a response and check the response parameter values", "");
+}
+// _ttg_#_1__236
+// 08 Read fault memory via CAPL
+void _ttg_fct_capltestcase_1__244()
+{
+  CreateCaplIFFunction("TCReadFaultMemory", 1);
+  AddIFParameterTestCaseId("38b75909-b364-4a3b-9ef0-95188a12d457");
+  AddIFParameterInt(8LL);
+  CallInterfaceFunction("08 Read fault memory via CAPL", "");
+}
+// _ttg_#_1__244
+// 09 Read extended data via CAPL
+void _ttg_fct_capltestcase_1__252()
+{
+  CreateCaplIFFunction("TCReadExtendedData", 1);
+  AddIFParameterTestCaseId("73914a28-ebeb-42c8-954c-65d624f8c190");
+  AddIFParameterInt(9LL);
+  CallInterfaceFunction("09 Read extended data via CAPL", "");
+}
+// _ttg_#_1__252
+// 10 Read snapshot data via CAPL
+void _ttg_fct_capltestcase_1__260()
+{
+  CreateCaplIFFunction("TCReadSnapshotData", 1);
+  AddIFParameterTestCaseId("60d4ddde-4fb1-4f63-9984-7b0c15eee10a");
+  AddIFParameterInt(10LL);
+  CallInterfaceFunction("10 Read snapshot data via CAPL", "");
+}
+// _ttg_#_1__260
+// 11 Download
+void _ttg_fct_capltestcase_1__268()
+{
+  CreateCaplIFFunction("TCDownload", 1);
+  AddIFParameterTestCaseId("8f9fdb5c-3562-453b-b87b-c53196a485e8");
+  AddIFParameterInt(11LL);
+  CallInterfaceFunction("11 Download", "");
+}
+// _ttg_#_1__268
+// 12 Determine and set variant
+void _ttg_fct_capltestcase_1__279()
+{
+  CreateCaplIFFunction("TCDetermineVariant", 1);
+  AddIFParameterTestCaseId("f2651cf4-072b-47dc-ac19-a3db70c97362");
+  AddIFParameterInt(12LL);
+  CallInterfaceFunction("12 Determine and set variant", "");
+}
+// _ttg_#_1__279
+// 13 Write and Read Mux Data
+void _ttg_fct_capltestcase_1__287()
+{
+  CreateCaplIFFunction("TCWriteAndReadMuxData", 1);
+  AddIFParameterTestCaseId("675984a5-0c4e-4e57-a20c-d84a42df6891");
+  AddIFParameterInt(13LL);
+  CallInterfaceFunction("13 Write and Read Mux Data", "");
+}
+// _ttg_#_1__287
+// 99 Hard Reset
+void _ttg_fct_tc_1__295()
+{
+  CreateTTEIFFunction("_ttg_tc_tc_1__295", 1, 0);
+  AddIFParameterTestCaseId("67fcc568-5d33-4bb5-97a6-4264f8cb8169");
+  CallInterfaceFunction("99 Hard Reset", "");
+}
+// _ttg_#_1__295
+// 01 Serial Number Read Door FL + FR
+testcase _ttg_tc_tc_1__9()
+{
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "SerialNumber_Read" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      _fct_TiTableHeadExpected();
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "SerialNumber", value);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'SerialNumber\'", "==", 1397051953LL, "");
+      _fct_TiCell(value);
+      _fct_TiCellResult((value==1397051953LL));
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__12
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "SerialNumber_Read" req;
+      if(!_fct_DiagSetTarget("DoorFR"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      _fct_TiTableHeadExpected();
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "SerialNumber", value);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'SerialNumber\'", "==", 1397051954LL, "");
+      _fct_TiCell(value);
+      _fct_TiCellResult((value==1397051954LL));
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__22
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+}
+// _ttg_#_1__9
+// 01.1 Serial Number Read (functional) Door FL + FR
+testcase _ttg_tc_tc_1__32()
+{
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "SerialNumber_Read" req;
+      if(!_fct_DiagSetTarget("FunctionalGroup"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      _fct_TiTableHeadExpected();
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "SerialNumber", value);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'SerialNumber\'", "Range", "1397051953..1397051954", "");
+      _fct_TiCell(value);
+      _fct_TiCellResult(((value>=1397051953LL) && (value<=1397051954LL)));
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__35
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+}
+// _ttg_#_1__32
+// 02 Check Door Contacts
+testcase _ttg_tc_tc_1__49()
+{
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Door_Status_Control" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      result = _fct_DiagSetParameter(req, "Door_Contact", 0LL);
+      if(result < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        _DiagErrCodeTestStep(result, "Cannot set Diagnostic parameter 'Door_Contact'");
+        break;
+      }
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "IOCBI_STA_PR"), "Cannot interpret response as Diagnostic primitive 'IOCBI_STA_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'IOCBI_STA_PR'.");
+      }
+      _fct_TiTableHeadExpected();
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "Door_Contact", value);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'Door_Contact\'", "==", 0LL, "");
+      _fct_TiCell(value);
+      _fct_TiCellResult((value==0LL));
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__52
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Door_Status_Control" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      result = _fct_DiagSetParameter(req, "Door_Contact.Door_contact_front_right", "open");
+      if(result < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        _DiagErrCodeTestStep(result, "Cannot set Diagnostic parameter 'Door_Contact.Door_contact_front_right'");
+        break;
+      }
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "IOCBI_STA_PR"), "Cannot interpret response as Diagnostic primitive 'IOCBI_STA_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'IOCBI_STA_PR'.");
+      }
+      _fct_TiTableHeadExpected();
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "Door_Contact.Door_contact_front_right", gDiagValueRaw, gDiagValueStr);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'Door_Contact.Door_contact_front_right\'", "==", "open", "open");
+      _fct_TiCell(gDiagValueStr);
+      _fct_TiCellResult((strncmp(gDiagValueStr, "open", 2000)==0));
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__67
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Door_Status_Read" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "RDBI_PR"), "Cannot interpret response as Diagnostic primitive 'RDBI_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'RDBI_PR'.");
+      }
+      _fct_TiTableHeadExpected();
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "Door_Contact.Door_contact_front_left", gDiagValueRaw, gDiagValueStr);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'Door_Contact.Door_contact_front_left\'", "==", "closed", "closed");
+      _fct_TiCell(gDiagValueStr);
+      _fct_TiCellResult((strncmp(gDiagValueStr, "closed", 2000)==0));
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "Door_Contact.Door_contact_front_right", gDiagValueRaw, gDiagValueStr);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'Door_Contact.Door_contact_front_right\'", "==", "open", "open");
+      _fct_TiCell(gDiagValueStr);
+      _fct_TiCellResult((strncmp(gDiagValueStr, "open", 2000)==0));
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "Door_Contact.Door_contact_rear_left", gDiagValueRaw, gDiagValueStr);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'Door_Contact.Door_contact_rear_left\'", "==", "closed", "closed");
+      _fct_TiCell(gDiagValueStr);
+      _fct_TiCellResult((strncmp(gDiagValueStr, "closed", 2000)==0));
+      // WriteDiagParamCompare
+      result = _fct_DiagGetParameter(resp, "Door_Contact.Door_contact_rear_right", gDiagValueRaw, gDiagValueStr);
+      _fct_TiNameOpValue(0, "Diagnostic parameter \'Door_Contact.Door_contact_rear_right\'", "==", "closed", "closed");
+      _fct_TiCell(gDiagValueStr);
+      _fct_TiCellResult((strncmp(gDiagValueStr, "closed", 2000)==0));
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__82
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Door_Status_ReturnControl" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "IOCBI_RCTECU_PR"), "Cannot interpret response as Diagnostic primitive 'IOCBI_RCTECU_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'IOCBI_RCTECU_PR'.");
+      }
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__108
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+}
+// _ttg_#_1__49
+// 03 Unlock and write variant coding
+testcase _ttg_tc_tc_1__114()
+{
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "ExtendedDiagnosticSession_Start" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "STDS_PR"), "Cannot interpret response as Diagnostic primitive 'STDS_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'STDS_PR'.");
+      }
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__117
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(14, "Diagnostic Unlock ECU", "");
+  {
+    long result;
+    _fct_DiagSetTarget("DoorFL");
+    DiagSetReportDetailLevel( 0/* onfail */);
+    _fct_ResetLocalVerdict();
+    TestStep("", "Unlocking Diagnostic ECU 'DoorFL'");
+    result = TestWaitForUnlockEcu(1LL);
+    if(result == 0)
+    {
+      TestStepPass( "Unlocking succeeded.");
+    }
+    else
+    {
+      _fct_SetLocalVerdictFail();
+      _DiagErrCodeTestStep(result, "Unlocking Diagnostic ECU 'DoorFL'");
+    }
+  }
+  // _ttg_!_1__123
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Variant_Coding_Read" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "RDBI_PR"), "Cannot interpret response as Diagnostic primitive 'RDBI_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'RDBI_PR'.");
+      }
+      _fct_TiTableHeadExpected();
+      result = _fct_DiagGetParameter(resp, "Codingstring.VehicleType", gDiagValueRaw, gDiagValueStr);
+      sysSetVariableString(sysvarString::`TestUnit::`CurrentVehicleType, gDiagValueStr);
+      _fct_TiRow(0, "System variable 'CurrentVehicleType'");
+      _fct_TiCell("=");
+      _fct_TiCell("");
+      _fct_TiCell(gDiagValueStr);
+      result = _fct_DiagGetParameter(resp, "Codingstring.WindowLift_Support", gDiagValueRaw, gDiagValueStr);
+      sysSetVariableString(sysvarString::`TestUnit::`CurrentWindowLiftSupport, gDiagValueStr);
+      _fct_TiRow(0, "System variable 'CurrentWindowLiftSupport'");
+      _fct_TiCell("=");
+      _fct_TiCell("");
+      _fct_TiCell(gDiagValueStr);
+      result = _fct_DiagGetParameter(resp, "VehicleSpeedToLockDoor", value);
+      @sysvarInt::`TestUnit::`CurrentVehicleSpeedToLockDoor = value;
+      _fct_TiRow(0, "System variable 'CurrentVehicleSpeedToLockDoor'");
+      _fct_TiCell("=");
+      _fct_TiCell("");
+      snprintf(_ttg_B, 2000, "%.15g", value);
+      _fct_TiCell(_ttg_B);
+      result = _fct_DiagGetParameter(resp, "Codingstring.CountryType", gDiagValueRaw, gDiagValueStr);
+      sysSetVariableString(sysvarString::`TestUnit::`CurrentCountryType, gDiagValueStr);
+      _fct_TiRow(0, "System variable 'CurrentCountryType'");
+      _fct_TiCell("=");
+      _fct_TiCell("");
+      _fct_TiCell(gDiagValueStr);
+      _fct_TiTableEvaluation( "Evaluate Response");
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__128
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  TestCommandBegin(13, "Diagnostic Service", "Set Vehicle Type to \"Transporter\"");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Variant_Coding_Write" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      sysGetVariableString(sysvarString::`TestUnit::`CurrentCountryType, _ttg_B0, elCount(_ttg_B0));
+      result = _fct_DiagSetParameter(req, "Codingstring.CountryType", _ttg_B0);
+      if(result < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        _DiagErrCodeTestStep(result, "Cannot set Diagnostic parameter 'Codingstring.CountryType'");
+        break;
+      }
+      result = _fct_DiagSetParameter(req, "Codingstring.VehicleType", "Transporter");
+      if(result < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        _DiagErrCodeTestStep(result, "Cannot set Diagnostic parameter 'Codingstring.VehicleType'");
+        break;
+      }
+      sysGetVariableString(sysvarString::`TestUnit::`CurrentWindowLiftSupport, _ttg_B1, elCount(_ttg_B1));
+      result = _fct_DiagSetParameter(req, "Codingstring.WindowLift_Support", _ttg_B1);
+      if(result < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        _DiagErrCodeTestStep(result, "Cannot set Diagnostic parameter 'Codingstring.WindowLift_Support'");
+        break;
+      }
+      result = _fct_DiagSetParameter(req, "VehicleSpeedToLockDoor", _SVC(sysvarInt::`TestUnit::`CurrentVehicleSpeedToLockDoor));
+      if(result < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        _DiagErrCodeTestStep(result, "Cannot set Diagnostic parameter 'VehicleSpeedToLockDoor'");
+        break;
+      }
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, -1, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "WDBI_PR"), "Cannot interpret response as Diagnostic primitive 'WDBI_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'WDBI_PR'.");
+      }
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__150
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+}
+// _ttg_#_1__114
+// 04 Read Fault Memory
+testcase _ttg_tc_tc_1__172()
+{
+  TestCommandBegin(16, "Fault Memory Clear", "");
+  {
+    long result;
+    int64 dtcNumeric;
+    _fct_DiagSetTarget("DoorFL");
+    DiagSetReportDetailLevel( 0/* onfail */);
+    _fct_ResetLocalVerdict();
+    TestStep("Query fault memory", "Clearing fault memory of target Diagnostic ECU 'DoorFL'");
+    result = TestWaitForDiagTroubleCodesCleared(-1, cDiagAppTimeoutDefault);;
+    if(_fct_EvaluateWaitResWithVerdict(result, 1 /*forward FM details on fail*/, "DTCs cleared successfully"))
+    {
+      TestReportWriteFaultMemoryDetails(_fct_GetLocalVerdict());
+    }
+  }
+  // _ttg_!_1__175
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+  {
+    CreateTTEIFFunction("_ttg_fct_StoreTwoDTCs_1__312", 0, 0);
+    CallInterfaceFunction("StoreTwoDTCs ()", "");
+    if(_fct_DoStop(EVerdBOF_TC, 1))
+    {
+      return;
+    }
+  }
+  TestCommandBegin(17, "Fault Memory DTCs", "");
+  {
+    long result;
+    DWORD statusByte;  // optional element
+    int64 dtcExpected;
+    long statusReceived;
+    WORD xorDtc;
+    _fct_DiagSetTarget("DoorFL");
+    DiagSetReportDetailLevel( 0/* onfail */);
+    _fct_ResetLocalVerdict();
+    statusByte = -1;
+    TestStep("Query fault memory", "Reading DTCs from Diagnostic ECU 'DoorFL'");
+    result = TestWaitForDiagTroubleCodes(statusByte, cDiagAppTimeoutDefault);
+    if(_fct_EvaluateWaitResWithVerdict(result, 1 /*forward FM details on fail*/))
+    {
+      xorDtc = 0;
+      dtcExpected = 0x1;
+      statusReceived = DiagGetDtcStatus(dtcExpected);
+      if(statusReceived < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        TestStepFail( "", "Mandatory DTC 0x%I64X%s not found!", dtcExpected, " (Diagnostic trouble code \'P000001\')");
+      }
+      else
+      {
+        long match;
+        match = 1;
+        if(match)
+        {
+          TestStepPass( "", "Mandatory DTC 0x%I64X%s found with matching status.", dtcExpected, " (Diagnostic trouble code \'P000001\')");
+        }
+        else
+        {
+          _fct_SetLocalVerdictFail();
+          TestStepFail( "", "Mandatory DTC 0x%I64X%s and status not found!", dtcExpected, " (Diagnostic trouble code \'P000001\')");
+        }
+      }
+      dtcExpected = 0x2;
+      statusReceived = DiagGetDtcStatus(dtcExpected);
+      if(statusReceived < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        TestStepFail( "", "Mandatory DTC 0x%I64X%s not found!", dtcExpected, " (Diagnostic trouble code \'P000002\')");
+      }
+      else
+      {
+        long match;
+        match = 1;
+        if(match)
+        {
+          TestStepPass( "", "Mandatory DTC 0x%I64X%s found with matching status.", dtcExpected, " (Diagnostic trouble code \'P000002\')");
+        }
+        else
+        {
+          _fct_SetLocalVerdictFail();
+          TestStepFail( "", "Mandatory DTC 0x%I64X%s and status not found!", dtcExpected, " (Diagnostic trouble code \'P000002\')");
+        }
+      }
+      dtcExpected = 0x800001;
+      statusReceived = DiagGetDtcStatus(dtcExpected);
+      if(statusReceived < 0)
+      {
+        TestStepPass( "", "Not allowed DTC 0x%I64X%s not found.", dtcExpected, " (Diagnostic trouble code \'B000001\')");
+      }
+      else
+      {
+        long match;
+        match = 1;
+        if(match)
+        {
+          _fct_SetLocalVerdictFail();
+          TestStepFail( "", "Not allowed DTC 0x%I64X%s found.", dtcExpected, " (Diagnostic trouble code \'B000001\')");
+        }
+        else
+        {
+          TestStepPass( "", "Not allowed DTC 0x%I64X%s and status not found.", dtcExpected, " (Diagnostic trouble code \'B000001\')");
+        }
+      }
+      dtcExpected = 0x800002;
+      statusReceived = DiagGetDtcStatus(dtcExpected);
+      if(statusReceived < 0)
+      {
+        TestStepPass( "", "Not allowed DTC 0x%I64X%s not found.", dtcExpected, " (Diagnostic trouble code \'B000002\')");
+      }
+      else
+      {
+        long match;
+        match = 1;
+        if(match)
+        {
+          _fct_SetLocalVerdictFail();
+          TestStepFail( "", "Not allowed DTC 0x%I64X%s found.", dtcExpected, " (Diagnostic trouble code \'B000002\')");
+        }
+        else
+        {
+          TestStepPass( "", "Not allowed DTC 0x%I64X%s and status not found.", dtcExpected, " (Diagnostic trouble code \'B000002\')");
+        }
+      }
+      dtcExpected = 0x800003;
+      statusReceived = DiagGetDtcStatus(dtcExpected);
+      if(statusReceived < 0)
+      {
+        TestStepPass( "", "Not allowed DTC 0x%I64X%s not found.", dtcExpected, " (Diagnostic trouble code \'B000003\')");
+      }
+      else
+      {
+        long match;
+        match = 1;
+        if(match)
+        {
+          _fct_SetLocalVerdictFail();
+          TestStepFail( "", "Not allowed DTC 0x%I64X%s found.", dtcExpected, " (Diagnostic trouble code \'B000003\')");
+        }
+        else
+        {
+          TestStepPass( "", "Not allowed DTC 0x%I64X%s and status not found.", dtcExpected, " (Diagnostic trouble code \'B000003\')");
+        }
+      }
+      dtcExpected = 0x800004;
+      statusReceived = DiagGetDtcStatus(dtcExpected);
+      if(statusReceived < 0)
+      {
+        TestStepPass( "", "Not allowed DTC 0x%I64X%s not found.", dtcExpected, " (Diagnostic trouble code \'B000004\')");
+      }
+      else
+      {
+        long match;
+        match = 1;
+        if(match)
+        {
+          _fct_SetLocalVerdictFail();
+          TestStepFail( "", "Not allowed DTC 0x%I64X%s found.", dtcExpected, " (Diagnostic trouble code \'B000004\')");
+        }
+        else
+        {
+          TestStepPass( "", "Not allowed DTC 0x%I64X%s and status not found.", dtcExpected, " (Diagnostic trouble code \'B000004\')");
+        }
+      }
+      TestReportWriteFaultMemoryDetails(_fct_GetLocalVerdict());
+    }
+  }
+  // _ttg_!_1__184
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+}
+// _ttg_#_1__172
+// 99 Hard Reset
+testcase _ttg_tc_tc_1__295()
+{
+  TestCommandBegin(13, "Diagnostic Service", "");
+  {
+    long result;
+    _fct_ResetLocalVerdict();
+    // Use while just to allow break!
+    do
+    {
+      long paramLen;
+      long bytePos;
+      double value;
+      DiagResponse * resp;
+      DiagRequest "Hard_Reset_Reset" req;
+      if(!_fct_DiagSetTarget("DoorFL"))
+      {
+        break;
+      }
+      TestReportResetDiagObjectList();
+      DiagSetReportDetailLevel( 0/* onfail */);
+      if(0 >= _fct_SendRequestAndWaitForResponse(req, -1, (long)2000LL, -1, -1, -1, EnumResult_pos, EnumServiceDetails_onfail, EnumSendingMode_physical, EnumSuppressPosResBit_asconfigured, EnumVerdictOnInvalidValues_fail))
+      {
+        break;
+      }
+      if(_DiagErrCodeTestStep(req.GetLastResponse(resp), "Cannot retrieve last response for request! No checks possible.") < 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      if(_DiagErrCodeTestStep(DiagInterpretAs(resp, "ER_PR"), "Cannot interpret response as Diagnostic primitive 'ER_PR'!") != 0)
+      {
+        _fct_SetLocalVerdictFail();
+        break;
+      }
+      else
+      {
+        TestStepPass( "Received primitive can be interpreted as Diagnostic primitive 'ER_PR'.");
+      }
+      if(!_fct_GetLocalVerdict())
+      {
+        // Dump diagnostics messages only if fail
+        TestReportWriteDiagObjectList();
+      }
+    }
+    while(0);
+  }
+  // _ttg_!_1__298
+  TestCommandEnd();
+  if(_fct_DoStop(EVerdBOF_TC, 1))
+  {
+    return;
+  }
+}
+// _ttg_#_1__295
+/*-----------------------------------------------------------------------------
+Module:     Vector.ITE.TestTable.Model (free)
+Interfaces: Function library for generated diagnostics commands
+-------------------------------------------------------------------------------
+This file contains some tool functions that are used by the diagnostics commands
+when CAPL code is generated from the Test Table Editor.
+The goal is to make code generation easier by putting complete CAPL functions
+into this file, and copying the file to the generated CAPL module.
+-------------------------------------------------------------------------------
+Copyright (c) Vector Informatik GmbH. All rights reserved.
+-----------------------------------------------------------------------------*/
+
+// global constants have to be added via mGlobalDeclarations, e.g. in DiagUseDefaults
+
+// report diagnostic error code as test step - use this for negative diagnostics error codes
+long _DiagErrCodeTestStep(long code, char function[])
+{
+  char errorCodeText[256];
+  char lastCommErrorText[256];
+  char tempReportBuffer[512];
+  long lastCommErrCode; 
+
+  switch(code)
+  {
+    case 0: return 0; // no error
+
+    // normal fail (i.e. caused by ECU)
+    case -98:
+    case -92: // communication error (TP level)
+    case -95:
+    case -77:
+    case -76:
+    case -73:
+    case -71:
+      DiagGetErrorString(code, errorCodeText, elCount(errorCodeText));
+
+      snprintf(tempReportBuffer, elCount(tempReportBuffer), "%s: %s (error code: %d).", function, errorCodeText, code);
+
+      lastCommErrCode = DiagGetLastCommunicationError();
+      if (lastCommErrCode != -1 && code == -92)
+      {
+        DiagGetCommunicationErrorString(lastCommErrCode, lastCommErrorText, elCount(lastCommErrorText));
+        testStepFail(0, "", "%s %s (comm error %d).", tempReportBuffer, lastCommErrorText, lastCommErrCode);
+      }
+      else
+      {
+        testStepFail(0, "", tempReportBuffer);
+      }
+
+      break;
+
+    // error in test system (< 0)
+    default: 
+      DiagGetErrorString(code, errorCodeText, elCount(errorCodeText));
+      testStepErrorInTestSystem(0, "", "%s: %s (error code: %d).", function, errorCodeText, code);
+      break;
+  }
+
+  return code;
+}
+
+long _DiagErrCodeTestStep_ZeroAsTimeout(long code, char function[])
+{
+  char buf[512];
+  long lastCommErrCode;
+  char lastCommErrorText[256];
+
+  if (code == 0)
+  {
+    snprintf(buf, elCount(buf), "Timeout");
+    //snprintf(buf, elCount(buf), "%s: timeout occurred.", function);
+
+    lastCommErrCode = DiagGetLastCommunicationError();
+    if (lastCommErrCode != -1)
+    {
+      DiagGetCommunicationErrorString(lastCommErrCode, lastCommErrorText, elCount(lastCommErrorText));
+      testStepFail("", "%s. %s (comm error %d).", buf, lastCommErrorText, lastCommErrCode);
+    }
+    else
+    {
+      testStepFail(buf);
+    }
+
+    return code;
+  }
+  else
+  {
+    return _DiagErrCodeTestStep(code, function);
+  }
+}
+
+// Call DiagSetTarget, but only if the given target has not been set already
+long _fct_DiagSetTarget(char ecuQualifier[])
+{
+  char sCurrentTarget[512];
+  long result;
+
+  if(!strncmp( sCurrentTarget, ecuQualifier, elcount(sCurrentTarget)))
+    return 1; // The target is already set, so nothing to do
+
+  // check for diag error code and output testStepFail()/testStepErrorInTestSystem()
+  if (_DiagErrCodeTestStep(DiagSetTarget(ecuQualifier), "DiagSetTarget") != 0)
+    return 0; // error occurred
+
+  // store the target into static local variable -> don't set it again the next time
+  strncpy(sCurrentTarget, ecuQualifier, elcount( sCurrentTarget));
+
+  return 1; // DiagSetTarget() was successful
+}
+
+// Write the request/response into the report depending on the report level
+// 0 = on fail - use TestReportAddDiagObject to store the object in the list and dump that list only when execution fails
+// 1 = never   - do not even store the object
+// 2 = always  - immediately write the object to the report using TestReportWriteDiagObject
+void _fct_ReportWriteRequest(DiagRequest * req, enum EnumServiceDetails reportServiceDetails)
+{
+  switch(reportServiceDetails)
+  {
+  case EnumServiceDetails_onfail:
+    TestReportAddDiagObject(req);      // store and write later
+    break;
+  case EnumServiceDetails_always:
+    TestReportWriteDiagObject(req);    // write immediately
+    break;
+  }
+}
+
+void _fct_ReportWriteResponse(DiagResponse * resp, enum EnumServiceDetails reportServiceDetails)
+{
+  switch(reportServiceDetails)
+  {
+  case EnumServiceDetails_onfail:
+    TestReportAddDiagObject(resp);     // store and write later
+    break;
+  case EnumServiceDetails_always:
+    TestReportWriteDiagObject(resp);   // write immediately
+    break;
+  }
+}
+
+void _fct_ReportWriteResponse(DiagRequest * req, enum EnumServiceDetails reportServiceDetails)
+{
+  switch(reportServiceDetails)
+  {
+  case EnumServiceDetails_onfail:
+    TestReportAddDiagResponse(req);     // store and write later
+    break;
+  case EnumServiceDetails_always:
+    TestReportWriteDiagResponse(req);   // write immediately
+    break;
+  }
+}
+
+long _fct_EvaluateWaitResWithVerdict(long result, long forwardFmDetailsVerdictOnFail)
+{
+  return _fct_EvaluateWaitResWithVerdict(result, forwardFmDetailsVerdictOnFail, "");
+}
+
+// Set the test case result depending on the value returned from a TestWaitFor-Command (for diagnostics).
+// This is the standard behavior, i.e. a Timeout or error are "fail", only 1 is "pass".
+long _fct_EvaluateWaitResWithVerdict(long result, long forwardFmDetailsVerdictOnFail, char passText[])
+{
+  if (result == 1)
+  {
+    if (strlen(passText) > 0)
+      TestStepPass(passText);
+    return 1;
+  }
+  else
+  {
+    _fct_SetLocalVerdictFail();
+    // Forward the local verdict to the report function, i.e. if not passed and "on fail" is active, the messages are dumped into the report
+    if (forwardFmDetailsVerdictOnFail)
+      TestReportWriteFaultMemoryDetails(0 /*fail*/);
+
+    _DiagErrCodeTestStep_ZeroAsTimeout(result, "Wait result");
+    return 0;
+  }
+}
+
+// Write the content of the extended data returned to the report - Note: should this be a CAPL function?
+void _fct_DumpExtendedData(DWORD dtc, char dtcSymbolIdent[])
+{
+  char paramPath[1000];
+  DWORD index;
+
+  snprintf(paramPath, elcount(paramPath), "Received extended data for DTC 0x%X%s", dtc, dtcSymbolIdent);
+  _ttg_Re = testInfoTable(paramPath);
+
+  testInfoHeadingBegin(_ttg_Re, 0);
+  _fct_TiCell("Parameter");
+  _fct_TiCell("Value");
+  _fct_TiCell("Unit");
+  testInfoHeadingEnd(_ttg_Re);
+
+  index = 0;
+  while(DiagGetReceivedParameterPath(index, paramPath, elcount(paramPath)) >= 0)
+  {
+    long rawLen;
+    char unit[20];
+    DiagGetReceivedParameter( paramPath, gDiagValueStr, elcount(gDiagValueStr));
+    //rawLen = DiagGetReceivedParameterRaw(paramPath, gDiagValueRaw, elcount(gDiagValueRaw));  // how to dump to report?
+    unit[0] = 0;
+    DiagGetReceivedParameterUnit(paramPath, unit, elcount( unit));
+    // overwrite path with name - you cannot use the path afterwards!
+    DiagGetReceivedParameterName(paramPath, paramPath, elcount(paramPath));
+
+    _fct_TiRow(0, paramPath); // Start new row, no indentation
+    _fct_TiCell(gDiagValueStr);
+    _fct_TiCell(unit);
+    ++index;
+  }
+
+  // EVAL00128354: dump extended data only into report, not into test trace!
+  TestStep(0, "EnvData", _ttg_Re, 0 /* eTSNormal */, 1 /* eTSRShowOnlyInReport */);
+}
+
+long _fct_DiagGetParameter(DiagResponse * resp, char paramPath[], double& valueOut)
+{
+  double value[1];
+  long result;
+  value[0] = valueOut; // Keep the value of the parameter if retrieval fails
+  result = resp.GetParameter(1, paramPath, value);
+  valueOut = value[0];
+  return result;
+}
+
+long _fct_DiagGetParameter(DiagResponse * resp, char paramPath[], byte bufferRaw[], char bufferStr[])
+{
+  long bitCount;
+
+  resp.GetParameterRaw(paramPath, bufferRaw, elCount(bufferRaw));
+  bitCount = resp.GetParameterSizeRaw(paramPath);
+  if (bitCount < 0)
+  {
+    snprintf(bufferStr, elCount(bufferStr), "_fct_DiagGetParameter: Cannot retrive parameter: '%s'", paramPath);
+    _DiagErrCodeTestStep(bitCount, bufferStr);
+  }
+
+  resp.GetParameter(paramPath, bufferStr, elCount(bufferStr));
+
+  return (bitCount + 7) / 8; // byte count
+}
+
+long _fct_DiagGetReceivedFMParameter(char paramPath[], byte bufferRaw[], char bufferStr[])
+{
+  long result;
+
+  result = DiagGetReceivedParameterRaw(paramPath, bufferRaw, elCount(bufferRaw));
+  if (result < 0)
+  {
+    snprintf(bufferStr, elCount(bufferStr), "_fct_DiagGetParameter: Cannot retrive parameter: '%s'", paramPath);
+    _DiagErrCodeTestStep(result, bufferStr);
+  }
+
+  DiagGetReceivedParameter(paramPath, bufferStr, elCount(bufferStr));
+  return result;
+}
+
+
+// Since we do not know during generation which type the argument has, let the compiler decide that!
+long _fct_DiagSetParameter(DiagRequest * req, char paramPath[], double value)
+{
+  long res;
+  res = req.SetParameter(1, paramPath, value);
+  if (res < 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "SetParameter: error setting value %g of parameter %s", value, paramPath);
+    _DiagErrCodeTestStep(res, _ttg_BR);
+  }
+  return res;
+}
+
+long _fct_DiagSetParameter(DiagRequest * req, char paramPath[], char value[])
+{
+  long res;
+  res = req.SetParameter(paramPath, value);
+  if (res < 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "SetParameter: error setting value %s of parameter %s", value, paramPath);
+    _DiagErrCodeTestStep(res, _ttg_BR);
+  }
+  return res;
+}
+
+long _fct_DiagSetParameterRawFromByteSeqText(DiagRequest * req, char paramPath[], char value[])
+{
+  long res, len;
+  len = _fct_ConvertByteSeqText2Bytes(value);
+  if (len < 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "SetParameter: illegal byte sequence: '%s' (parameter %s). Use hex tuples like '01 AF ...'", value, paramPath);
+    _DiagErrCodeTestStep(len, _ttg_BR);
+    return -1;
+  }
+  return _fct_DiagSetParameter(req, paramPath, gDiagValueRaw, len);
+}
+
+long _fct_DiagSetParameter(DiagRequest * req, char paramPath[], byte value[], int len)
+{
+  long res;
+  res = req.SetParameterRaw(paramPath, value, len);
+  if (res < 0)
+  {
+    snprintf(_ttg_BR, elCount(_ttg_BR), "SetParameter: error setting data value of parameter %s", paramPath);
+    _DiagErrCodeTestStep(res, _ttg_BR);
+  }
+  return res;
+}
+
+// Fill gDiagValueRaw with the bytes given here
+long _fct_ConvertByteSeqText2Bytes(char value[])
+{
+  DWORD in;
+  DWORD out;
+  char c;
+  out = 0;
+
+  for(in = 0; in < elCount(value) && (c = value[in]) != 0; ++in)
+  {
+    long digit;
+    byte b;
+    if( _fct_isspace(c))
+      continue;
+
+    digit = _fct_HexDigitToInt(c);
+    if (digit < 0)
+      return -1; // error: not a digit
+    b = (BYTE) digit;
+
+    if(++in >= elCount(value) || (c = value[in]) == 0)
+      return -1; // error: just 1 digit
+
+    digit = _fct_HexDigitToInt(c);
+    if (digit < 0)
+      return -1; // error not a digit
+
+    gDiagValueRaw[out++] = (b << 4) + (BYTE) digit;
+  }
+  return out;
+}
+
+long _fct_DiagReadBeforeWrite(DiagRequest * req, enum EnumServiceDetails reportServiceDetails)
+{
+  diagRequest * readRq;
+  diagResponse * readResp;
+  int i;
+  char paramPath[300];
+  BYTE paramRaw[4096];
+  long result;
+  long status;
+
+  result = req.GetPrimitiveData(paramRaw, elcount(paramRaw));
+  if(result <= 1)
+  {
+    if (result < 0)
+      _DiagErrCodeTestStep(result, "GetPrimitiveData");
+    else
+      TestStepErrorInTestSystem("Single byte request cannot be initialized from ECU values!");
+    return 0; // error
+  }
+
+  if(paramRaw[0] == 0x3B) // KWP WriteDataByLocalIdentifier
+  {
+    paramRaw[0] = 0x1A;   // KWP ReadEcuIdentification
+    readRq.Resize(2);
+    readRq.SetPrimitiveData(paramRaw, 2);
+  }
+  else if(paramRaw[0] == 0x2E)  // UDS WriteDataByIdentifier
+  {
+    paramRaw[0] = 0x22;     // UDS ReadDataByIdentifier
+    readRq.Resize( 3);
+    readRq.SetPrimitiveData(paramRaw, 3);
+  }
+  else
+  {
+    TestStepErrorInTestSystem("Not a supported pair of services!");
+    return 0;
+  }
+ 
+  if(readRq.SendRequest() < 0)
+  {
+    TestStepErrorInTestSystem("Sending read request failed!");
+    return 0;
+  }
+
+  if(reportServiceDetails != EnumServiceDetails_never)
+  {
+    _fct_TestStep_SendReq(readRq, 0);
+    TestSuppressWaitingStartOutput();
+    result = TestWaitForDiagRequestSent(readRq, cDiagAppTimeoutDefault);
+    if (result != 1)
+    {
+      _DiagErrCodeTestStep_ZeroAsTimeout(result, "TestWaitForDiagRequestSent");
+      return 0;
+    }
+
+    TestStepPass("Request sent successfully");
+    _fct_ReportWriteRequest(readRq, reportServiceDetails);
+  }
+ 
+  TestStep("", "Receiving diagnostic response");
+  TestSuppressWaitingStartOutput();
+  result = TestWaitForDiagResponse(readRq, cDiagAppTimeoutDefault);
+  if (result != 1)
+  {
+    _DiagErrCodeTestStep_ZeroAsTimeout(result, "TestWaitForDiagResponse");
+    return 0;
+  }
+
+  TestStepPass("Response received successfully");
+ 
+  _fct_ReportWriteResponse(readRq, reportServiceDetails);
+
+  i = 0;
+  status = 1;
+  readRq.GetLastResponse(readResp);
+  while(diagGetParameterPath(readResp, i, paramPath, elcount(paramPath)) > 0)
+  {
+    long paramLen;
+    ++i;
+
+    if(diagIsParameterConstant(readResp, paramPath) > 0)
+      continue;
+
+    paramLen = diagGetParameterSizeRaw(readResp, paramPath);
+    if(paramLen == 0)
+      continue; // a structure parameter?!
+
+    if(diagGetParameterRaw(readResp, paramPath, paramRaw, elcount(paramRaw)) < 0)
+    {
+      status = 0;
+      continue;
+    }
+    //write( "Response parameter '%s', %d byte [%02x %02x %02x]", paramPath, (paramLen + 7) / 8, paramRaw[0], paramRaw[1], paramRaw[2]);
+    if(paramLen < 0)
+      status = 0; // error
+    else if(diagSetParameterRaw(req, paramPath, paramRaw, (paramLen + 7)/8) < 0)
+      status = 0;
+  }
+  if(i <= 0)
+    return 0; // Not a single parameter copied!
+  return status;
+}
+
+void _fct_TestStep_SendReq(DiagRequest * req, int isFunctional)
+{
+  char sFunctional[15] = " functionally";
+
+  sFunctional[0] = isFunctional == 1 ? ' ' : 0; // Indicate whether request is sent functionally
+
+  if(req.IsRaw())
+  {
+    TestStep("", "Sending raw request%s ...", sFunctional);
+  }
+  else
+  {
+    char objectPath[512];
+    objectPath[0] = '?';
+    objectPath[1] = 0;
+    req.GetObjectPath(objectPath, elcount( objectPath));
+    TestStep("", "Sending request '%s'%s ...", objectPath, sFunctional);
+  }
+}
+
+// Return 1 to continue, 0 if test case shall abort
+// -1 indicates that the default shall be used
+// result: <=0 : pos, 1: neg, 2: any, 3: none, 4: none_or_pos, 5: ignore, 6: ignoreall
+// sendingMode: 0: physical, 1: functional
+// suppressPosResp: 0: default, 1: set, 2: clear
+long _fct_SendRequestAndWaitForResponse(DiagRequest * req, long P2_ms, long P2ext_ms, long P2observed_ms, long appTimeout_ms, long maxRPCount,
+		      enum EnumResult expectedResult,
+		      enum EnumServiceDetails reportServiceDetails,
+		      enum EnumSendingMode sendingMode,
+		      enum EnumSuppressPosResBit suppressPosResp,
+		      enum EnumVerdictOnInvalidValues verdOnInvValues)
+{
+  long status;  
+  int64 sentTime;  
+  long P2current;
+  long P2extCurrent;
+  long P2_orig;
+  long P2ex_orig;
+/*
+  // Reset last response message
+  gLastResponse.Resize(1);
+  gLastResponse.SetPrimitiveByte(0, 0xFF);
+  gLastResponseTime = -1;
+*/
+  if(appTimeout_ms < 0)
+    appTimeout_ms = cDiagAppTimeoutDefault;
+
+  P2current = (P2_ms > 0 ? P2_ms : DiagGetP2Timeout(2));
+  P2extCurrent = (P2ext_ms > 0 ? P2ext_ms : DiagGetP2Extended(2));
+  DiagSetP2Timeouts( P2current + (P2observed_ms > 0 ? P2observed_ms : 0), P2extCurrent);
+  TestStep( "", "Set P2 to %dms, P2ex to %dms", P2current, P2extCurrent);
+
+  if(suppressPosResp == EnumSuppressPosResBit_set)
+  {
+    status = req.SetSuppressResp(1);
+    if(status != 0)
+      TestStepWarning("", "Setting positive response message indication bit returns %d. The bit might not be supported.", status);
+  }
+  else if(suppressPosResp == EnumSuppressPosResBit_clear && req.GetSuppressResp() == 1)
+  {
+    status = req.SetSuppressResp(0);
+    if(status != 0)
+      TestStepWarning("", "Clearing positive response message indication bit returns %d.", status);
+  }
+  
+  _fct_TestStep_SendReq(req, sendingMode == EnumSendingMode_functional);
+
+  if(DiagIsFunctionalGroup() == 1)
+  {
+    status = req.SendNetwork();
+    if(status != 0)
+      TestStepErrorInTestSystem("", "Sending request to network returns %d", status);
+  }
+  else
+  {
+    switch(sendingMode)
+    {
+    case EnumSendingMode_physical:
+      if(_DiagErrCodeTestStep(req.SendRequest(), "send request physically") != 0)
+        return 0;
+      break;
+    case EnumSendingMode_functional:
+      if(_DiagErrCodeTestStep(req.SendFunctional(), "send request functionally") != 0)
+        return 0;
+      break;
+    default: // unsupported mode?!
+      TestStepErrorInTestSystem("", "Invalid sending mode %d", sendingMode);
+      return 0;
+    }
+  }
+
+  //TestStep("", "Sending Diagnostic Request");
+  TestSuppressWaitingStartOutput();
+  status = TestWaitForDiagRequestSent(req, appTimeout_ms);
+  if(status <= 0)
+  {
+    _DiagErrCodeTestStep_ZeroAsTimeout(status, "Sending request");
+    return 0;
+  }
+  TestStepPass("Request sent successfully");
+  sentTime = timeNowInt64();
+
+  _fct_ReportWriteRequest(req, reportServiceDetails);
+
+  TestStep("", "Receiving diagnostic response");
+  TestSuppressWaitingStartOutput();
+  status = TestWaitForDiagResponse(req, appTimeout_ms);
+   
+  if(status == 1)
+  {
+    //TestStepPass("Response received successfully"); // this will be handled below ...
+    _fct_ReportWriteResponse(req, reportServiceDetails);
+  }
+  
+  if(expectedResult == EnumResult_ignoreall)
+  {
+    TestStepPass("Ignore all.");
+    WaitForFurtherResponses();
+    return 1;
+  }
+
+  if(status < 0 && status != -92)
+  {
+    _DiagErrCodeTestStep(status, "wait for response");
+    return 0;
+  }
+
+  if(status == 0 || status == -92)
+  {
+    // No response received
+    if(suppressPosResp == EnumSuppressPosResBit_set && req.GetSuppressResp() == 1)
+    {
+      // Request was sent with SPRMIB set
+      if(expectedResult == EnumResult_pos || expectedResult == EnumResult_neg || expectedResult == EnumResult_any)
+      {
+        TestStepFail("", "Expected response for request with SPRMIB set, none received");
+        return 0;
+      }
+    }
+
+    if(expectedResult == EnumResult_none || expectedResult == EnumResult_none_or_pos || req.GetSuppressResp() == 1)
+    {
+      TestStepPass("No response, as expected.");
+      return 1;
+    }
+    if(expectedResult == EnumResult_ignore)
+    {
+      TestStep("", "No response, ignored.");
+      return 1;
+    }
+
+    _DiagErrCodeTestStep_ZeroAsTimeout(0, "Receiving diagnostic response");
+    return 0;
+  }
+  
+  // A response has been received!
+  if(P2observed_ms > 0)
+  {
+    QWORD cancelTime;
+    int64 responseDelay;
+    DiagGetP2CancelTime( cancelTime);
+    responseDelay = (cancelTime - sentTime) / 1000000;
+    if( P2current < responseDelay)
+    {
+      // The response was received in the observation interval
+      TestStepFail("", "P2 client (%d ms) violated: response started after %lld ms (but within observation interval of %d ms).", P2current, responseDelay, P2current + P2observed_ms);
+    }
+    else
+    {
+      TestStepPass("The response started within P2.");
+    }
+  }
+
+  // Are response pendings counted at all?
+  if(maxRPCount >= 0)
+  {
+    long count;
+    count = DiagGetRPCount();
+    if(count < 0)
+      TestStepWarning("", "Active communication interface does not support counting response pending messages!");
+    else if(count > maxRPCount)
+      TestStepFail("", "Received %d Response Pendings, but only up to %d allowed!", count, maxRPCount);
+    else
+      TestStepPass("", "Received %d Response Pendings which is within limit of %d.", count, maxRPCount);
+  }
+  
+  if(expectedResult == EnumResult_pos || expectedResult == EnumResult_none_or_pos || expectedResult == EnumResult_neg || expectedResult == EnumResult_any)
+  {
+    DWORD reasonOut[1];
+    if(DiagCheckValidRespPrimitive(req, reasonOut) != 1)
+    {
+      switch(reasonOut[0])
+      {
+      case 0: // not defined, probably "OK"
+        break;
+      case 1: // data too long EVAL00144409
+        TestStepFail("Received response is too long!"); // error from ECU
+        break;
+      case 2:
+        TestStepFail("Received response is too short!"); // error from ECU
+        break;
+      case 3:
+        TestStepFail("Constant overwritten in response!"); // error from ECU
+        break;
+      default:
+      case 4: // Unknown format Error
+        TestStepFail("Error in response"); // error from ECU
+        break;
+      case 5:
+        switch (verdOnInvValues)
+        {
+        case EnumVerdictOnInvalidValues_no_impact:
+          TestStep("", "Illegal parameter value(s) found");
+          break;
+        case EnumVerdictOnInvalidValues_warning:
+          TestStepWarning("Illegal parameter value(s) found");
+          break;
+        case EnumVerdictOnInvalidValues_fail:
+          TestStepFail("Illegal parameter value(s) found"); // error from ECU
+          break;
+        }
+
+        break;
+      }
+    }
+  }
+
+  // Check the response
+  status = req.GetLastResponseCode();
+  if(status == -1)
+  {
+    // positive response received
+    if(suppressPosResp == EnumSuppressPosResBit_set && req.GetSuppressResp() == 1)
+    {
+      // Positive response should have been suppressed, so this is only allowed if response pendings were received
+      if(DiagGetRPCount() < 1)
+        TestStepFail("", "Positive response should have been suppressed!");
+      else
+        TestStep("", "Positive response should have been suppressed, but received after ResponsePending. OK.");
+    }
+
+    switch(expectedResult)
+    {
+    case EnumResult_neg:
+    case EnumResult_none:
+        TestStepFail("Positive response received although not expected!");
+      break;
+    default:
+        TestStepPass("Positive response received.");
+        break;
+    }
+  }
+  else if(status > 0)
+  {
+    // negative response received
+    switch(expectedResult)
+    {
+    case EnumResult_neg:
+    case EnumResult_any:
+    case EnumResult_ignore:
+        TestStepPass("Negative response received.");
+        break;
+    default:
+        TestStepFail("Negative response received although not expected!");
+      break;
+    }
+  }
+
+  WaitForFurtherResponses();
+  
+  return 1;
+}
+
+// Wait for additional request if several responses may be received
+void WaitForFurtherResponses()
+{
+  if(DiagIsFunctionalGroup() == 1)
+  {
+    TestStep( "", "Waiting until request processing completes...");
+    while(0 < diagGetPendingRequests())
+      TestWaitForTimeout(10);
+  }
+}
+
+// return the numeric value of a hex digit, or -1 if it is not a digit
+long _fct_HexDigitToInt(char c)
+{
+  if(c >= '0' && c <= '9')
+    return c - '0';
+  else if(c >= 'a' && c <= 'f')
+    return 10 + c - 'a';
+  else if(c >= 'A' && c <= 'F')
+    return 10 + c - 'A';
+  return -1;
+}
+
+long _fct_isspace(char c)
+{
+  switch(c)
+  {
+  case ' ':
+  case '\n':
+  case '\r':
+  case '\t':
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+// Return 0 if the byte sequence given matches the given string that has the form "0F 1E 2D", where number of bytes of the left side is given
+// -1: error, e.g. when non-hex-digit chars are found
+//  1: the raw value length is too short
+//  2: at least 1 byte does not match
+//  3: the raw value length is longer than the bytes defined in the string
+long _fct_CompareBytesToHexString(BYTE rawVal[], long byteCount, char valStr[])
+{
+  DWORD i;
+  DWORD rPos;
+
+  if(byteCount > elcount(rawVal))
+  {
+    _fct_SetLocalVerdictFail();
+    testStepErrorInTestSystem("The buffer itself is not large enough, this should not happen!");
+    return -1;
+  }
+
+  rPos = 0;
+  for(i = 0; i < elcount(valStr) && valStr[i]; ++i)
+  {
+    WORD b;
+    char c;
+    long digit;
+
+    // parse nibble
+    c = valStr[i];
+    if(_fct_isspace(c))
+      continue;
+    digit = _fct_HexDigitToInt(c);
+    if(digit >= 0)
+      b = (BYTE) digit;
+    else
+    {
+      _fct_SetLocalVerdictFail();
+      TestStepErrorInTestSystem("", "Invalid character '%c' at position %d in reference string \"%s\"!", c, i, valStr);
+      return -1;
+    }
+
+    // second nibble
+    c = valStr[++i];
+    if(c == 0 || _fct_isspace(c))
+    {
+      _fct_SetLocalVerdictFail();
+      TestStepErrorInTestSystem("", "Error: not a 2 byte sequence! (position %d in reference string \"%s\")", i, valStr);
+      return -1;
+    }
+    b <<= 4;
+    digit = _fct_HexDigitToInt(c);
+    if(digit >= 0)
+      b += (BYTE) digit;
+    else
+    {
+      _fct_SetLocalVerdictFail();
+      TestStepErrorInTestSystem("", "Invalid character '%c' at position %d in reference string \"%s\"!", c, i, valStr);
+      return -1;
+    }
+
+    // compare bytes
+    if(rPos >= byteCount)
+      return 1; // the raw value length is too short
+    else if(rawVal[rPos] != b)
+      return 2; // at least 1 byte does not match
+    ++rPos;
+  }
+
+  if(rPos < byteCount)
+    return 3; // the raw value length is longer than the bytes defined in the string
+
+  return 0; // sequences match
+}
+
+long _fct_SAEtoNumber( char saeCode[])
+{
+  int len;
+  long value;
+  char strbuf[10];
+
+  if (!str_match_regex(saeCode, "[BbCcPpUu][0-9a-fA-F]+"))
+    return 0;
+
+  switch( toupper(saeCode[0]))
+  {
+  case 'B':
+    value = 0x80;
+    break;
+  case 'C':
+    value = 0x40;
+    break;
+  case 'P':
+    value = 0;
+    break;
+  case 'U':
+    value = 0xC0;
+    break;
+  default:
+    return 0; // Not a valid SAE code!
+  }
+  len = strlen(saeCode);
+
+  if (len == 5)
+    value <<= 8;
+  else if (len == 7)
+    value <<= 16;
+  else
+    return 0; // Not a valid SAE code!
+
+  // Since atol does not allow giving an offset and a type, we have to create the number first
+  snprintf( strbuf, elcount( strbuf), "0%s", saeCode);
+  strbuf[1] = 'x'; // overwrite the SAE character to get the "0x" prefix
+  return value + atol( strbuf);
+}
+
+void _fct_ResetLocalVerdict()
+{
+  // For a specific code sequence this will allow tracking if a "fail" has happened, i.e. for the fault memory pattern if they need to dump messages "on fail"
+  gLocalVerdict = 1; // pass
+  _ttg_TestActionFailCnt = 0;
+}
+
+void _fct_SetLocalVerdictFail()
+{
+  // The code sequence has failed!
+  gLocalVerdict = 0; // fail
+}
+
+void _fct_AddLocalVerdict(long verdict)
+{
+  // The code sequence has failed!
+  gLocalVerdict = gLocalVerdict && verdict;
+}
+
+long _fct_GetLocalVerdict()
+{
+  return gLocalVerdict && _ttg_TestActionFailCnt==0;
+}
+

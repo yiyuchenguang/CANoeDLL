@@ -1,0 +1,8 @@
+[NStatePersistence]
+Signature=VectorStatePersistence
+[VGlobalMeasurementIndex]
+mMeasurementIndex=2834
+[VTestConfigurationConfigData]
+DiagTestConfiguration_NextTestRun=47
+[VTestExecutable]
+DiagTestConfiguration_LastReportFile=TestReports\Report_DiagTestConfiguration_20211108_184010.vtestreport
